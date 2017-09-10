@@ -21,10 +21,24 @@ int main(int argc, char **argv)
 
     mode = validargs(argc, argv);
 
+    printf("The mode is 0x%04X \n", mode);
+
     debug("Mode: 0x%X", mode);
 
     if(mode & 0x8000) {
         USAGE(*argv, EXIT_SUCCESS);
+    }
+    else if (mode & 0x4000) {
+        // Fractionated Morse Cipher
+        printf("Fractionated Morse Cipher\n");
+    }
+    else if (mode & 0x0088) {
+        // Polybius Cipher
+        printf("Polybius Cipher\n");
+    }
+    else if (mode == 0){
+        // Usage error
+        printf("It's an Error\n");
     }
 
     return EXIT_SUCCESS;
