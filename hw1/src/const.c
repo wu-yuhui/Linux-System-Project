@@ -27,3 +27,4 @@ char polybius_table[257] = {0};
 
 // A buffer for the letters in the Fractionated Morse cipher table
 char fm_key[27] = {0};
+

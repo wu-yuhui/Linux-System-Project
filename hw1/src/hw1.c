@@ -26,13 +26,96 @@
  * @param argv The argument strings passed to the program from the CLI.
  * @return Refer to homework document for the return value of this function.
  */
+void formPolybiusTable(unsigned short mode){
+    if (key == NULL){
+        printf("Normal Polybius\n");
+        // Normal Polybius
+        int row = mode & 0x00F0;
+        int column = mode & 0x000F;
 
+        // Insert polybius_alphabet into polybiuds table
+        int counterRow = 0;
+        int counterColumn = 0;
+        const char* tmp_polybius_alphabet = polybius_alphabet;
+        while (*tmp_polybius_alphabet != 0){
+            *(polybius_table+ counterRow*column + counterColumn) = *tmp_polybius_alphabet;
+            tmp_polybius_alphabet++;
+
+            printf("Row: %d, Column %d \n", counterRow, counterColumn);
+
+            counterColumn++;
+            if (counterColumn == column){
+                counterRow++;
+                counterColumn = 0;
+            }
+        }
+    }
+
+    else {
+        printf("Polybius with KEY!! \n");
+        // Polybius with Key
+
+        int row = mode & 0x00F0;
+        int column = mode & 0x000F;
+
+        // Insert polybius_alphabet into polybiuds table
+        int counterRow = 0;
+        int counterColumn = 0;
+        const char* tmp_polybius_alphabet = polybius_alphabet;
+
+        // Special Cases
+        int keyLength = LenghtofString(key);
+        counterColumn += keyLength % column;
+        counterRow += keyLength / column;
+
+        while (*tmp_polybius_alphabet != 0){
+            if (/* belongs in KEY -> return number # */ CharInString(key, tmp_polybius_alphabet) ){
+                int keyPosition = CharInString(key, tmp_polybius_alphabet) - 1;
+                *(polybius_table+keyPosition) = *tmp_polybius_alphabet;
+                tmp_polybius_alphabet++;
+            }
+            else {
+                *(polybius_table+ counterRow*column + counterColumn) = *tmp_polybius_alphabet;
+                tmp_polybius_alphabet++;
+
+                counterColumn++;
+                if (counterColumn == column){
+                    counterRow++;
+                    counterColumn = 0;
+                }
+            }
+
+        }
+    }
+
+//    printf("\n\n polybius_table: %s \n", polybius_table);
+
+    return;
+}
+
+
+int CharInString(const char* toSearch, const char* beSearched){
+    int counterKey = 0;
+    while (*(toSearch+counterKey) != 0){
+        // If found, return position+1
+        if (*(toSearch+counterKey) == *beSearched) return (counterKey+1);
+        else counterKey++;
+    }
+    // Not found return 0;
+    return 0;
+
+}
+
+
+int LenghtofString(const char* string){
+    int length = 0;
+    while (*(string+length) != 0) length++;
+    return length;
+}
 
 int checkRepeatAndSubset(const char* theKey, const char* alphabet) {
-        int keyLength = 0;
-        while (*(theKey+keyLength) != 0) keyLength++;
-        int alphabetLength = 0;
-        while (*(alphabet+alphabetLength) != 0) alphabetLength++;
+        int keyLength = LenghtofString(theKey);
+        int alphabetLength = LenghtofString(alphabet);
 
     // 1. Check if theKey has repeating characters
         for (int counter1 = 0; counter1 < keyLength; counter1++)

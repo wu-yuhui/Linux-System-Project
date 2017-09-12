@@ -32,6 +32,13 @@ extern const char *key;
  * @param argv The argument strings passed to the program from the CLI.
  * @return Refer to homework document for the return value of this function.
  */
+
+void formPolybiusTable(unsigned short mode);
+
+int LenghtofString(const char* string);
+int CharInString(const char* toSearch, const char* beSearched);   // return 0 if none, otherwise position+1
+int checkRepeatAndSubset(const char* theKey, const char* alphabet);
+
 unsigned short validargs(int argc, char **argv);
 
 #define USAGE(program_name, retcode) do{                                                        \

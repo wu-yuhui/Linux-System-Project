@@ -29,16 +29,18 @@ int main(int argc, char **argv)
         USAGE(*argv, EXIT_SUCCESS);
     }
     else if (mode & 0x4000) {
-        // Fractionated Morse Cipher
         printf("Fractionated Morse Cipher\n");
+        // Fractionated Morse Cipher
     }
     else if (mode & 0x0088) {
-        // Polybius Cipher
         printf("Polybius Cipher\n");
+        // Polybius Cipher
+        formPolybiusTable(mode);
+
     }
     else if (mode == 0){
-        // Usage error
         printf("It's an Error\n");
+        // Usage error
     }
 
     return EXIT_SUCCESS;
