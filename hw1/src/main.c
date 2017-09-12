@@ -37,6 +37,37 @@ int main(int argc, char **argv)
         // Polybius Cipher
         formPolybiusTable(mode);
 
+        printf("Enter Characters:");
+
+        if (mode & 0x2000){
+            // Decrypt
+            char cin;
+            while ((cin = getchar()) != EOF){
+                if (cin == ' ') printf(" ");
+                else if (cin == '\n') printf("\n");
+                else{
+                    int rowNum = cin - '0';
+                    int columnNum = getchar() - '0';
+                    int position = rowNum * (mode & 0x000F) + columnNum;
+                    //printf("%d %d %X \n", rowNum, columnNum, position);
+                    char cout = PolybiusDecrypt(position);
+                    printf("%c",cout);
+                }
+            }
+        }
+        else {
+            // Encrypt
+            char cin;
+            while ((cin = getchar()) != EOF){
+                if (cin == ' ') printf(" ");
+                else if (cin == '\n') printf("\n");
+                else{
+                    int position = PolybiusEncrypt(cin);
+                    printf("%X%X", position / (mode & 0x000F), position % (mode & 0x000F));
+                }
+            }
+        }
+
     }
     else if (mode == 0){
         printf("It's an Error\n");

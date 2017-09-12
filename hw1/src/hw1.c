@@ -41,7 +41,7 @@ void formPolybiusTable(unsigned short mode){
             *(polybius_table+ counterRow*column + counterColumn) = *tmp_polybius_alphabet;
             tmp_polybius_alphabet++;
 
-            printf("Row: %d, Column %d \n", counterRow, counterColumn);
+            //printf("Row: %d, Column %d \n", counterRow, counterColumn);
 
             counterColumn++;
             if (counterColumn == column){
@@ -87,10 +87,23 @@ void formPolybiusTable(unsigned short mode){
 
         }
     }
-
-//    printf("\n\n polybius_table: %s \n", polybius_table);
-
+    printf(" polybius_table: %s \n", polybius_table);
     return;
+}
+
+
+int PolybiusEncrypt(char c){
+    char* charAddr = &c;
+    int position = CharInString(polybius_table, charAddr) - 1;
+//    printf("Postion: %d ", position);
+    return position;
+}
+
+char PolybiusDecrypt(int position){
+//    printf("In decrypt\n");
+    char c = *(polybius_table+position);
+    //printf("c' %c\n", c);
+    return c;
 }
 
 
