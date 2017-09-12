@@ -34,6 +34,8 @@ extern const char *key;
  */
 
 void formPolybiusTable(unsigned short mode);
+int PolybiusEncrypt(char c);
+char PolybiusDecrypt(int position);
 
 int LenghtofString(const char* string);
 int CharInString(const char* toSearch, const char* beSearched);   // return 0 if none, otherwise position+1
