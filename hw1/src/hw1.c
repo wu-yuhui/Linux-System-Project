@@ -94,6 +94,9 @@ int MorseEncrypt(char c, int* whiteSpace){
 }
 
 void FM_Encrypt(){
+
+//    printf("FM_Encrypt\n");
+
     for (int counterFMEnc = 0; counterFMEnc < LenghtofString(polybius_table)-2; counterFMEnc+=3){
         int keyPosition = TotalValueofFMKey((polybius_table+counterFMEnc));
         printf( "%c", *(fm_key+keyPosition));
@@ -102,33 +105,81 @@ void FM_Encrypt(){
 }
 
 
-void FindMorseOriginal(historyLength, nextXLength){
+int FindMorseOriginal(int historyLength, int nextXLength){
+
+//    printf("FindMorseOriginal\n");
+//    printf("historyLength: %d, nextXLength: %d\n", historyLength, nextXLength);
+
+    int fmSectionLength = nextXLength-1;
+
+    int counterNo = 0;
+    while (*(morse_table+counterNo) != 0){
+        // if length equals
+        if (LenghtofString(*(morse_table+counterNo)) == fmSectionLength){
+            int counterSection = 0;
+            // String char-by-char comparison
+            while ( *(*(morse_table+counterNo)+counterSection) == *(polybius_table+historyLength+1+counterSection) ){
+//                printf("%c", *(polybius_table+historyLength+1+counterSection));
+                counterSection++;
+                if(counterSection == fmSectionLength) return counterNo;
+            }
+        }
+        counterNo++;
+    }
+    return 0;
 
 }
 
 
 void MorseDeCrypt(){
     // Find code in morse_table and  polybius alphabet
-
+//    printf("MorseDeCrypt\n");
     //Find next x;
-    int historyLength = 1;
-    int nextXLength = 0;  // but 2 x's are nextXLength+1 far.
+    int historyLength = -1;
+    int nextXLength = 1;  // nextXLength far, but word length is (nextXLength-1)
 
     int polybius_table_Length = LenghtofString(polybius_table);
     if ( *(polybius_table+polybius_table_Length-1) != 'x'){
-        // Not x terminated
+
+        while (historyLength+nextXLength < polybius_table_Length){
+
+            // Not x terminated
+            while (*(polybius_table+historyLength+nextXLength) != 'x'){
+                // if last number
+                if (*(polybius_table+historyLength+nextXLength) == 0) break;
+                nextXLength++;
+            }
+            // The No.1 Word case
+            // if (historyLength == 0) historyLength = -1;
+            if (nextXLength == 1)   printf("%c", ' ');
+            else {
+                int morsePosition = FindMorseOriginal(historyLength, nextXLength);
+//                printf("\nMorse Position= %d\n", morsePosition);
+                printf("%c", *(polybius_alphabet+morsePosition));
+            }
+            historyLength += nextXLength;
+            nextXLength = 1;
+        }
 
     }
     else {
-        // x terminated
-        while (*(polybius_table+historyLength+nextXLength) != 'x'){
-            nextXLength++;
+        while (historyLength+nextXLength < polybius_table_Length){
+            // x terminated
+            while (*(polybius_table+historyLength+nextXLength) != 'x'){
+                nextXLength++;
+            }
+            // The No.1 Word case
+            // if (historyLength == 0) historyLength = -1;
+            if (nextXLength == 1)   printf("%c", ' ');
+            else {
+                int morsePosition = FindMorseOriginal(historyLength, nextXLength);
+//                printf("\nMorse Position= %d\n", morsePosition);
+                printf("%c", *(polybius_alphabet+morsePosition));
+            }
+
+            historyLength += nextXLength;
+            nextXLength = 1;
         }
-        // The No.1 Word case
-        if (historyLength == 1) {historyLength = 0; nextXLength++;}
-
-        FindMorseOriginal(historyLength, nextXLength);
-
     }
 
     // Use section length to find letter
@@ -141,8 +192,10 @@ void FM_Decrypt(char c){
     int insertPosition = LenghtofString(polybius_table);
 
     if (c == '\n'){
+//        PrintMorseStorage();
         MorseDeCrypt();
         InitialMorseStorage();
+        printf("\n");
 
     }
     else {
@@ -161,7 +214,7 @@ void FM_Decrypt(char c){
 
 
 int TotalValueofFMKey(const char* tmp_key){
-    return ( ValueofFMKey(*tmp_key) + ValueofFMKey(*(tmp_key+1))*3 + ValueofFMKey(*(tmp_key+2))*9 );
+    return ( ValueofFMKey(*tmp_key)*9 + ValueofFMKey(*(tmp_key+1))*3 + ValueofFMKey(*(tmp_key+2)) );
 }
 
 int ValueofFMKey(char c){
