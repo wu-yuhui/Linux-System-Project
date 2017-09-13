@@ -35,6 +35,14 @@ int main(int argc, char **argv)
         if (mode & 0x2000){
 //            printf("Fractionated Morse Decrypt");
             // Decrypt
+            InitialMorseStorage();
+            formFMTable();
+
+            char cin;
+            while ((cin = getchar()) != EOF){
+                FM_Decrypt(cin);
+            }
+
         }
         else{
 //            printf("Fractionated Morse Encrypt\n");
@@ -58,18 +66,7 @@ int main(int argc, char **argv)
                     if (charNotExit == 0) return EXIT_FAILURE;
             }
 
-            /****** Fractionated Morse Encrypt *******/
-
-
-            // FM-Encrypt
-//            FM_Encrypt();
-
-
-
         }
-
-//            PrintMorseStorage();
-//            InitialMorseStorage();
     }
     else if (mode & 0x0088) {
         //printf("Polybius Cipher\n");

@@ -36,8 +36,10 @@ void InitialMorseStorage();
 void PrintMorseStorage();
 int MorseEncrypt(char c, int* whiteSpace);
 void FM_Encrypt();
+void FM_Decrypt(char c);
 int TotalValueofFMKey(const char* tmp_key);
 int ValueofFMKey(char c);
+char PositionofFMKey(int i);
 void formFMTable();
 
 

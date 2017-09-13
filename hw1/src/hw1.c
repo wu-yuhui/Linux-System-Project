@@ -102,6 +102,64 @@ void FM_Encrypt(){
 }
 
 
+void FindMorseOriginal(historyLength, nextXLength){
+
+}
+
+
+void MorseDeCrypt(){
+    // Find code in morse_table and  polybius alphabet
+
+    //Find next x;
+    int historyLength = 1;
+    int nextXLength = 0;  // but 2 x's are nextXLength+1 far.
+
+    int polybius_table_Length = LenghtofString(polybius_table);
+    if ( *(polybius_table+polybius_table_Length-1) != 'x'){
+        // Not x terminated
+
+    }
+    else {
+        // x terminated
+        while (*(polybius_table+historyLength+nextXLength) != 'x'){
+            nextXLength++;
+        }
+        // The No.1 Word case
+        if (historyLength == 1) {historyLength = 0; nextXLength++;}
+
+        FindMorseOriginal(historyLength, nextXLength);
+
+    }
+
+    // Use section length to find letter
+}
+
+
+
+void FM_Decrypt(char c){
+    // Find Insertion Point
+    int insertPosition = LenghtofString(polybius_table);
+
+    if (c == '\n'){
+        MorseDeCrypt();
+        InitialMorseStorage();
+
+    }
+    else {
+
+        // Which key
+        char* charAddr = &c;
+        int position = CharInString(fm_key, charAddr) - 1;
+
+        *(polybius_table+insertPosition) = PositionofFMKey((position/9)%3);
+        *(polybius_table+insertPosition+1) = PositionofFMKey((position/3)%3);
+        *(polybius_table+insertPosition+2) = PositionofFMKey(position%3);
+
+    }
+
+}
+
+
 int TotalValueofFMKey(const char* tmp_key){
     return ( ValueofFMKey(*tmp_key) + ValueofFMKey(*(tmp_key+1))*3 + ValueofFMKey(*(tmp_key+2))*9 );
 }
@@ -112,6 +170,14 @@ int ValueofFMKey(char c){
     else if (c == 'x') return 2;
     else return 0;
 }
+
+char PositionofFMKey(int i){
+    if (i == 0) return '.';
+    else if (i == 1) return '-';
+    else if (i == 2) return 'x';
+    else return 0;
+}
+
 
 void formFMTable(){
     if (key == NULL){
