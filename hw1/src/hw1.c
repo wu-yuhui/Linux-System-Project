@@ -26,9 +26,137 @@
  * @param argv The argument strings passed to the program from the CLI.
  * @return Refer to homework document for the return value of this function.
  */
+
+
+void InitialMorseStorage(){
+    // Initial Polybius table to store 1-step Morse for FM use.
+    for (int counterClear = 0; counterClear < 257; counterClear++){
+        *(polybius_table+counterClear) = 0;
+//        printf("Initial Poly for Morse:%d\n", counterClear);
+    }
+}
+
+void PrintMorseStorage(){
+//    printf("Morse Storage: ");
+    for (int counterClear = 0; counterClear < 257; counterClear++){
+//        printf("PrintMorseStorage %d\n", counterClear);
+        if (*(polybius_table+counterClear) != 0)
+            printf("%c", *(polybius_table+counterClear));
+    }
+    printf("\n");
+}
+
+
+int MorseEncrypt(char c, int* whiteSpace){
+    // 1. If whiteSpace = 1,skip
+    // 2. If not, add "xx", whiteSpace++
+//    printf("In Morse Encrypt \n");
+    int insertPosition = LenghtofString(polybius_table);
+
+//    printf("insertPosition: %d\n", insertPosition);
+//    PrintMorseStorage();
+//    printf("SWGEGEGGEGE\n");
+
+    if (c == ' ' ){
+        if (*whiteSpace == 1)   return 1;
+        else {
+            *(polybius_table+insertPosition) = 'x';
+            *whiteSpace = 1;
+        }
+    }
+    else if (c == '\n') {
+        *whiteSpace = 0;
+        *(polybius_table+insertPosition) = 'x';
+//        PrintMorseStorage();
+        FM_Encrypt();
+        InitialMorseStorage();
+        return 1;
+    }
+    else {
+        // Find if in the Morse Table and not NULL
+        char* charAddr = &c;
+        int morsePosition = CharInString(polybius_alphabet, charAddr) - 1;
+
+        // If NULL return 0 for FAILURE
+        if (**(morse_table+morsePosition) == 0) return 0;
+
+        int morseCodeLength = 0;
+        while (*(*(morse_table+morsePosition)+morseCodeLength) != 0) {
+            *(polybius_table+insertPosition+morseCodeLength) = *(*(morse_table+morsePosition)+morseCodeLength);
+            morseCodeLength++;
+        }
+        *(polybius_table+insertPosition+morseCodeLength) = 'x';
+        *whiteSpace = 0;
+        return 1;
+    }
+    return 1;
+
+}
+
+void FM_Encrypt(){
+    for (int counterFMEnc = 0; counterFMEnc < LenghtofString(polybius_table)-2; counterFMEnc+=3){
+        int keyPosition = TotalValueofFMKey((polybius_table+counterFMEnc));
+        printf( "%c", *(fm_key+keyPosition));
+    }
+    printf("\n");
+}
+
+
+int TotalValueofFMKey(const char* tmp_key){
+    return ( ValueofFMKey(*tmp_key) + ValueofFMKey(*(tmp_key+1))*3 + ValueofFMKey(*(tmp_key+2))*9 );
+}
+
+int ValueofFMKey(char c){
+    if (c == '.') return 0;
+    else if (c == '-') return 1;
+    else if (c == 'x') return 2;
+    else return 0;
+}
+
+void formFMTable(){
+    if (key == NULL){
+        int lenghtofFMAlphabet = LenghtofString(fm_alphabet);
+        for (int counterFMTable = 0; counterFMTable < lenghtofFMAlphabet; counterFMTable++)
+            *(fm_key+counterFMTable) = *(fm_alphabet+counterFMTable);
+    }
+    else{
+        // Have Key
+        const char* tmp_fm_alphabet = fm_alphabet;
+        int keyLength = LenghtofString(key);
+        int counterFMTable = 0;
+
+        while (*tmp_fm_alphabet != 0){
+
+            if (/* belongs in KEY -> return number # */ CharInString(key, tmp_fm_alphabet) ){
+                int keyPosition = CharInString(key, tmp_fm_alphabet) - 1;
+                *(fm_key+keyPosition) = *tmp_fm_alphabet;
+                tmp_fm_alphabet++;
+            }
+            else {
+                *(fm_key+ keyLength + counterFMTable) = *tmp_fm_alphabet;
+                tmp_fm_alphabet++;
+
+                counterFMTable++;
+            }
+        }
+/*
+    printf("FM KEEEEEEEEY: ");
+    for (int counterClear = 0; counterClear < 27; counterClear++){
+//        printf("PrintMorseStorage %d\n", counterClear);
+        if (*(fm_key+counterClear) != 0)
+            printf("%c", *(fm_key+counterClear));
+        }
+        printf("\n");
+*/
+    }
+}
+
+
+
+
 void formPolybiusTable(unsigned short mode){
     if (key == NULL){
-        printf("Normal Polybius\n");
+        //printf("Normal Polybius\n");
         // Normal Polybius
         int row = mode & 0x00F0;
         int column = mode & 0x000F;
@@ -52,7 +180,7 @@ void formPolybiusTable(unsigned short mode){
     }
 
     else {
-        printf("Polybius with KEY!! \n");
+        //printf("Polybius with KEY!! \n");
         // Polybius with Key
 
         int row = mode & 0x00F0;
@@ -87,7 +215,7 @@ void formPolybiusTable(unsigned short mode){
 
         }
     }
-    printf(" polybius_table: %s \n", polybius_table);
+    //printf(" polybius_table: %s \n", polybius_table);
     return;
 }
 
@@ -106,6 +234,12 @@ char PolybiusDecrypt(int position){
     return c;
 }
 
+int hexChartoInt(char c){
+    if (c >= 'a' && c <= 'f')   return (10+c-'a');
+    else if (c >= 'A' && c <= 'F')  return (10+c-'A');
+    else    return (c-'0');
+
+}
 
 int CharInString(const char* toSearch, const char* beSearched){
     int counterKey = 0;
@@ -148,19 +282,6 @@ int checkRepeatAndSubset(const char* theKey, const char* alphabet) {
 }
 
 unsigned short validargs(int argc, char **argv) {
-/*
-    printf("argv = %p\n", argv);                            // Pointer to the first word of input.
-    printf("argv+1 = %p\n", argv+1);                        // Pointer to the second word of input. seperated by white space,
-    printf("argv+2 = %p\n", argv+2);                        // Pointer to the third word of input. seperated by white space,
-    printf("*(argv+1) = %s\n", *(argv+1));                  // Pointer to the first letter of the second word
-    printf("*(*(argv+1)) = %d\n", *(*(argv+1)));            // ASCII value of the first letter of the second word
-    printf("*(*(argv+1)+1) = %d\n", *(*(argv+1)+1));        // ASCII value of the second letter of the second word
-    printf("*(*(argv+1)+2) = %d\n", *(*(argv+1)+2));
-    printf("*(*(argv+1)+3) = %d\n", *(*(argv+1)+3));
-    printf("*(*(argv+1)+4) = %d\n", *(*(argv+1)+4));        // If exceed boundaries,this will obtain the next string component of the input
-    printf("*(*(argv+1)+5) = %d\n", *(*(argv+1)+5));
-    printf("argc = %d\n", argc);
-*/
 
     int validNum = 0x0000;
 
@@ -176,7 +297,7 @@ unsigned short validargs(int argc, char **argv) {
             return 0x8000;
         }
         else if (*(*(argv+1)) == '-' && *(*(argv+1)+1) == 'p' && *(*(argv+1)+2) == 0){        // if argv[1] == -p
-            printf ("-p  ");
+//            printf ("-p  ");
             validNum += 0x0000;
 
             // Encrypt or Decrypt
@@ -199,7 +320,7 @@ unsigned short validargs(int argc, char **argv) {
                     // Recusively parse all left arguments
                     if (*(*(argv+previousArguments+counter)) == '-'){
                         if (*(*(argv+previousArguments+counter)+1) == 'k' && *(*(argv+previousArguments+counter)+2) == 0){
-                            printf("-k ");
+//                            printf("-k ");
                             counter++;
                             /*  Case -k:Parse KEY and Check repeat or subset
 
@@ -211,7 +332,7 @@ unsigned short validargs(int argc, char **argv) {
                             counter++;
                         }
                         else if (*(*(argv+previousArguments+counter)+1) == 'r' && *(*(argv+previousArguments+counter)+2) == 0){
-                            printf("-r ");
+//                            printf("-r ");
                             counter++;
                             /*   Case -c:Check Number Valid  */
                             // Check Validation of Number
@@ -236,7 +357,7 @@ unsigned short validargs(int argc, char **argv) {
 
                         }
                         else if (*(*(argv+previousArguments+counter)+1) == 'c' && *(*(argv+previousArguments+counter)+2) == 0){
-                            printf("-c ");
+//                            printf("-c ");
                             counter++;
                             /*   Case -c:Check Number Valid  */
                             // Check Validation of Number
@@ -275,7 +396,7 @@ unsigned short validargs(int argc, char **argv) {
             return validNum;
         }
         else if (*(*(argv+1)) == '-' && *(*(argv+1)+1) == 'f' && *(*(argv+1)+2) == 0){        // if argv[1] == -f
-            printf ("-f  ");
+//            printf ("-f  ");
             validNum += 0x4000;
 
             // Encrypt or Decrypt
@@ -293,7 +414,7 @@ unsigned short validargs(int argc, char **argv) {
                     // Recusively parse all left arguments
                     if (*(*(argv+previousArguments+counter)) == '-'){
                         if (*(*(argv+previousArguments+counter)+1) == 'k' && *(*(argv+previousArguments+counter)+2) == 0){
-                            printf("-k ");
+//                            printf("-k ");
                             counter++;
                             /*  Case -k:Parse KEY and Check repeat or subset
 
