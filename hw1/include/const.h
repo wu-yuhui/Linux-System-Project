@@ -32,11 +32,24 @@ extern const char *key;
  * @param argv The argument strings passed to the program from the CLI.
  * @return Refer to homework document for the return value of this function.
  */
+void InitialMorseStorage();
+void PrintMorseStorage();
+int MorseEncrypt(char c, int* whiteSpace);
+void FM_Encrypt();
+int FindMorseOriginal(int historyLength, int nextXLength);
+void MorseDeCrypt();
+void FM_Decrypt(char c);
+int TotalValueofFMKey(const char* tmp_key);
+int ValueofFMKey(char c);
+char PositionofFMKey(int i);
+void formFMTable();
+
 
 void formPolybiusTable(unsigned short mode);
 int PolybiusEncrypt(char c);
 char PolybiusDecrypt(int position);
 
+int hexChartoInt(char c);
 int LenghtofString(const char* string);
 int CharInString(const char* toSearch, const char* beSearched);   // return 0 if none, otherwise position+1
 int checkRepeatAndSubset(const char* theKey, const char* alphabet);
