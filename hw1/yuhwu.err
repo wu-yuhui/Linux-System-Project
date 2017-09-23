@@ -1,0 +1,47 @@
+src/hw1.c: In function ‘MorseEncrypt’:
+src/hw1.c:54:26: error: implicit declaration of function ‘LenghtofString’ [-Werror=implicit-function-declaration]
+     int insertPosition = LenghtofString(polybius_table);
+                          ^
+src/hw1.c:71:9: error: implicit declaration of function ‘FM_Encrypt’ [-Werror=implicit-function-declaration]
+         FM_Encrypt();
+         ^
+src/hw1.c:78:29: error: implicit declaration of function ‘CharInString’ [-Werror=implicit-function-declaration]
+         int morsePosition = CharInString(polybius_alphabet, charAddr) - 1;
+                             ^
+src/hw1.c: At top level:
+src/hw1.c:96:6: error: conflicting types for ‘FM_Encrypt’ [-Werror]
+ void FM_Encrypt(){
+      ^
+src/hw1.c:71:9: note: previous implicit declaration of ‘FM_Encrypt’ was here
+         FM_Encrypt();
+         ^
+src/hw1.c: In function ‘FM_Encrypt’:
+src/hw1.c:101:27: error: implicit declaration of function ‘TotalValueofFMKey’ [-Werror=implicit-function-declaration]
+         int keyPosition = TotalValueofFMKey((polybius_table+counterFMEnc));
+                           ^
+src/hw1.c: In function ‘FM_Decrypt’:
+src/hw1.c:207:44: error: implicit declaration of function ‘PositionofFMKey’ [-Werror=implicit-function-declaration]
+         *(polybius_table+insertPosition) = PositionofFMKey((position/9)%3);
+                                            ^
+src/hw1.c: In function ‘TotalValueofFMKey’:
+src/hw1.c:217:14: error: implicit declaration of function ‘ValueofFMKey’ [-Werror=implicit-function-declaration]
+     return ( ValueofFMKey(*tmp_key)*9 + ValueofFMKey(*(tmp_key+1))*3 + ValueofFMKey(*(tmp_key+2)) );
+              ^
+src/hw1.c: At top level:
+src/hw1.c:220:5: error: conflicting types for ‘ValueofFMKey’
+ int ValueofFMKey(char c){
+     ^
+src/hw1.c:220:1: note: an argument type that has a default promotion can’t match an empty parameter name list declaration
+ int ValueofFMKey(char c){
+ ^
+src/hw1.c:217:14: note: previous implicit declaration of ‘ValueofFMKey’ was here
+     return ( ValueofFMKey(*tmp_key)*9 + ValueofFMKey(*(tmp_key+1))*3 + ValueofFMKey(*(tmp_key+2)) );
+              ^
+src/hw1.c:227:6: error: conflicting types for ‘PositionofFMKey’
+ char PositionofFMKey(int i){
+      ^
+src/hw1.c:207:44: note: previous implicit declaration of ‘PositionofFMKey’ was here
+         *(polybius_table+insertPosition) = PositionofFMKey((position/9)%3);
+                                            ^
+cc1: all warnings being treated as errors
+make: *** [build/hw1.o] Error 1
