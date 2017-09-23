@@ -1,4 +1,38 @@
 Tests,Points,OutOf,Notes
 Homework Folder Exists?,-,-,Homework Folder Exists
-Homework Compiles?,-,-,Homework Does Not Compile
-Total,0,50,
+Homework Compiles?,-,-,Homework Compiles
+07_poly_invalid_key,1,1,
+06_poly_invalid_rows,1,1,
+05_poly_with_valid_key,1,1,
+04_poly_dec_rows_cols,2,2,
+03_poly_encr,2,2,
+02_help_menu,1,1,
+01_no_args,1,1,
+13_enc_dec,2,2,
+12_full_decrypt,2,2,
+11_rows_cols_decrypt,2,2,
+10_key_decrypt,2,2,
+09_whitespace_decrypt,0,2,polybius_tests.c:15: Program output was incorrect. Did not match contents of: ../../../sample_files/polybius_files/whitespace.txt
+08_mixedcase_decrypt,0,2,polybius_tests.c:15: Program output was incorrect. Did not match contents of: ../../../sample_files/polybius_files/mixedcase.txt
+07_simple_decrypt,2,2,
+06_full_encrypt,2,2,
+05_rows_cols,1,1,
+04_key,1,1,
+03_whitespace,0,1,polybius_tests.c:15: Program output was incorrect. Did not match contents of: ../../../sample_files/polybius_files/whitespace_out.txt
+02_mixed_case,0,1,polybius_tests.c:15: Program output was incorrect. Did not match contents of: ../../../sample_files/polybius_files/mixedcase_out.txt
+01_polybius_simple_from_stdin,1,1,
+04_fm_invalid_key,1,1,
+03_fm_valid_key,1,1,
+02_fm_decr,2,2,
+01_fm_encr,2,2,
+10_fm_long_d,0,2,fm_tests.c:188: Program did not exit with EXIT_SUCCESS. Got: 139
+09_fm_with_key_d,0,2,fm_tests.c:16: Output of file was incorrect
+08_fm_newlines_d,0,2,fm_tests.c:16: Output of file was incorrect
+07_fm_basic_d,1,1,
+06_fm_invalid_input_e,1,1,
+05_fm_long_e,0,2,fm_tests.c:102: Program did not exit with EXIT_SUCCESS. Got: 139
+04_fm_with_key_e,1,1,
+03_fm_newlines_e,1,1,
+02_fm_multi_space_e,1,1,
+01_fm_basic_e,1,1,
+Total,36,50,
