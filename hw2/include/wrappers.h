@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "utf.h"
+//#include "utf.h"
 
 /**
  * @brief Error checking for malloc

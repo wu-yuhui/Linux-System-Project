@@ -40,6 +40,10 @@ int
 from_utf16be_to_utf8(int infile, int outfile)
 {
   /* TODO */
+  int sum = infile + outfile;
+  if (!sum) {  printf("DAMN\n"); }
+  /*  to first compile  */
+
   return -1;
 }
 

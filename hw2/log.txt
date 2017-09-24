@@ -1,0 +1,6 @@
+gcc -Wall -Werror -Wextra -Wno-variadic-macros -g -DDEBUG -DCOLOR -I include -c -o build/wrappers.o src/wrappers.c
+gcc -Wall -Werror -Wextra -Wno-variadic-macros -g -DDEBUG -DCOLOR -I include -c -o build/main.o src/main.c
+src/main.c:20:11: error: cast from pointer to integer of different size [-Werror=pointer-to-int-cast]
+src/main.c:23:8: error: cast to pointer from integer of different size [-Werror=int-to-pointer-cast]
+src/main.c:24:8: error: cast to pointer from integer of different size [-Werror=int-to-pointer-cast]
+cc1: all warnings being treated as errors
