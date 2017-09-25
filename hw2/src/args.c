@@ -62,7 +62,7 @@ parse_args(int argc, char *argv[])
       optind++;
     }
   }
-  free(joined_argv);
+//  free(joined_argv);
 }
 
 format_t
@@ -98,15 +98,18 @@ join_string_array(int count, char *array[])
   str_len = array_size(count, array);
 //  ret = charArray;
 
-  // (1) Malloc sufficient memory for pointer!!!
+  // (1) Malloc Sufficient memory!!
   ret = Malloc(str_len);
 
   for (i = 0; i < count; ++i) {
+
     cur_str_len = strlen(array[i]);
     memecpy(ret + len, array[i], cur_str_len);
     len += cur_str_len;
+
     memecpy(ret + len, " ", 1);
     len += 1;
+
   }
 
   return ret;
