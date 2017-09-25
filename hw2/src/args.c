@@ -41,10 +41,10 @@ parse_args(int argc, char *argv[])
           if (optopt != 'h')
             fprintf(stderr, KRED "-%c is not a supported argument\n" KNRM,
                     optopt);
-/*        case "errorcase"[0]:
-          USAGE(argv[0]);
-          exit(0);
-*/        }
+//        case "errorcase"[0]:
+//          USAGE(argv[0]);
+//          exit(0);
+        }
         default: {
           break;
         }
@@ -91,12 +91,15 @@ char*
 join_string_array(int count, char *array[])
 {
   char *ret;
-  char charArray[count];
+//  char charArray[count];
   int i;
-  int len = 0, /*str_len,*/ cur_str_len;
+  int len = 0, str_len, cur_str_len;
 
-//  str_len = array_size(count, array);
-  ret = charArray;
+  str_len = array_size(count, array);
+//  ret = charArray;
+
+  // (1) Malloc sufficient memory for pointer!!!
+  ret = Malloc(str_len);
 
   for (i = 0; i < count; ++i) {
     cur_str_len = strlen(array[i]);
