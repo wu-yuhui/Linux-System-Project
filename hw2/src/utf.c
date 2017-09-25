@@ -68,7 +68,7 @@ check_bom()
     program_state->encoding_from = UTF16LE;
     program_state->bom_length = 2;
   }
-  elsif(LOWER_TWO_BYTES(bom) == UTF16BE)
+  else if(LOWER_TWO_BYTES(bom) == UTF16BE)
   {
     info("Source BOM: %s", STR_UTF16BE);
     program_state->encoding_from = UTF16BE;

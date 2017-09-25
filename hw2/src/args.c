@@ -34,6 +34,7 @@ parse_args(int argc, char *argv[])
       switch (option) {
         case 'e': {
           info("Encoding Argument: %s", optarg);
+          program_state->encoding_to = determine_format(optarg);
 //          if ((program_state->encoding_to = determine_format(optarg)) == 0)
 //            goto errorcase;
         }
@@ -50,16 +51,17 @@ parse_args(int argc, char *argv[])
         }
       }
     }
-    elsif(argv[optind] != NULL)
+    // for getopt will steal one optind
+    else if(argv[optind-1] != NULL)
     {
       if (program_state->in_file == NULL) {
-        program_state->in_file = argv[optind];
+        program_state->in_file = argv[optind-1];
       }
-      elsif(program_state->out_file == NULL)
+      else if(program_state->out_file == NULL)
       {
         program_state->out_file = argv[optind];
       }
-      optind++;
+      //optind++;
     }
   }
 //  free(joined_argv);
