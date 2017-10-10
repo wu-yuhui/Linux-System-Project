@@ -1,0 +1,116 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ALLOCATED_BITS	include/sfmm.h	20;"	d
+ALL_OBJF	Makefile	/^ALL_OBJF := $(SRC_OBJF) $(TST_OBJF)$/;"	m
+BIND	Makefile	/^BIND := bin$/;"	m
+BLDD	Makefile	/^BLDD := build$/;"	m
+BLOCK_SIZE_BITS	include/sfmm.h	17;"	d
+CC	Makefile	/^CC := gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS := -Wall -Werror$/;"	m
+DEBUG	include/debug.h	31;"	d
+DEBUG_H	include/debug.h	2;"	d
+DFLAGS	Makefile	/^DFLAGS := -g -DDEBUG -DCOLOR$/;"	m
+ERROR	include/debug.h	34;"	d
+EXEC	Makefile	/^EXEC := sfmm$/;"	m
+EXEC_TEST	Makefile	/^EXEC_TEST := $(EXEC)_tests$/;"	m
+FREE_LIST_COUNT	include/sfmm.h	40;"	d
+HEADER_UNUSED_BITS	include/sfmm.h	16;"	d
+INC	Makefile	/^INC := -I$(INCD)$/;"	m
+INCD	Makefile	/^INCD := include$/;"	m
+INFO	include/debug.h	32;"	d
+KBLU	include/debug.h	13;"	d
+KBLU	include/debug.h	23;"	d
+KBWN	include/debug.h	17;"	d
+KBWN	include/debug.h	27;"	d
+KCYN	include/debug.h	15;"	d
+KCYN	include/debug.h	25;"	d
+KGRN	include/debug.h	11;"	d
+KGRN	include/debug.h	21;"	d
+KMAG	include/debug.h	14;"	d
+KMAG	include/debug.h	24;"	d
+KNRM	include/debug.h	19;"	d
+KNRM	include/debug.h	9;"	d
+KRED	include/debug.h	10;"	d
+KRED	include/debug.h	20;"	d
+KWHT	include/debug.h	16;"	d
+KWHT	include/debug.h	26;"	d
+KYEL	include/debug.h	12;"	d
+KYEL	include/debug.h	22;"	d
+LIBD	Makefile	/^LIBD := lib$/;"	m
+LIST_1_MAX	include/sfmm.h	31;"	d
+LIST_1_MIN	include/sfmm.h	30;"	d
+LIST_2_MAX	include/sfmm.h	33;"	d
+LIST_2_MIN	include/sfmm.h	32;"	d
+LIST_3_MAX	include/sfmm.h	35;"	d
+LIST_3_MIN	include/sfmm.h	34;"	d
+LIST_4_MAX	include/sfmm.h	37;"	d
+LIST_4_MIN	include/sfmm.h	36;"	d
+NL	include/debug.h	6;"	d
+PADDED_BITS	include/sfmm.h	19;"	d
+PAGE_SZ	include/sfmm.h	38;"	d
+REQUESTED_SIZE_BITS	include/sfmm.h	21;"	d
+SFMM_H	include/sfmm.h	11;"	d
+SF_FOOTER_SIZE	include/sfmm.h	26;"	d
+SF_HEADER_SIZE	include/sfmm.h	23;"	d
+SRCD	Makefile	/^SRCD := src$/;"	m
+SRCF	Makefile	/^SRCF := $(shell find $(SRCD) -type f -name *.c)$/;"	m
+SRC_OBJF	Makefile	/^SRC_OBJF := $(patsubst $(SRCD)\/%,$(BLDD)\/%,$(SRCF:.c=.o))$/;"	m
+STD	Makefile	/^STD := -std=gnu11$/;"	m
+SUCCESS	include/debug.h	35;"	d
+TEST_LIB	Makefile	/^TEST_LIB := -lcriterion$/;"	m
+TSTD	Makefile	/^TSTD := tests$/;"	m
+TSTF	Makefile	/^TSTF := $(shell find $(TSTD) -type f -name *.c)$/;"	m
+TST_OBJF	Makefile	/^TST_OBJF := $(patsubst $(TSTD)\/%,$(BLDD)\/%,$(TSTF:.c=.o))$/;"	m
+TWO_ZEROES	include/sfmm.h	18;"	d
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, Malloc_an_Integer_check_freelist, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, Malloc_over_four_pages, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, free_coalesce, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, free_double_free, .init = sf_mem_init, .fini = sf_mem_fini, .signal = SIGABRT) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, free_no_coalesce, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, freelist, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, realloc_larger_block, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, realloc_smaller_block_free_block, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+Test	tests/sfmm_tests.c	/^Test(sf_memsuite_student, realloc_smaller_block_splinter, .init = sf_mem_init, .fini = sf_mem_fini) {$/;"	f
+WARN	include/debug.h	33;"	d
+allocated	include/sfmm.h	/^    uint64_t      allocated : ALLOCATED_BITS;$/;"	m	struct:__anon1
+allocated	include/sfmm.h	/^    uint64_t      allocated : ALLOCATED_BITS;$/;"	m	struct:__anon2
+block_size	include/sfmm.h	/^    uint64_t     block_size : BLOCK_SIZE_BITS;$/;"	m	struct:__anon1
+block_size	include/sfmm.h	/^    uint64_t     block_size : BLOCK_SIZE_BITS;$/;"	m	struct:__anon2
+debug	include/debug.h	39;"	d
+debug	include/debug.h	45;"	d
+error	include/debug.h	79;"	d
+error	include/debug.h	85;"	d
+find_list_index_from_size	tests/sfmm_tests.c	/^int find_list_index_from_size(int sz) {$/;"	f
+free_list	include/sfmm.h	/^} free_list;$/;"	t	typeref:struct:__anon3
+head	include/sfmm.h	/^    sf_free_header *head;$/;"	m	struct:__anon3
+header	include/sfmm.h	/^    sf_header header;$/;"	m	struct:sf_free_header
+info	include/debug.h	49;"	d
+info	include/debug.h	55;"	d
+main	src/main.c	/^int main(int argc, char const *argv[]) {$/;"	f
+max	include/sfmm.h	/^    uint16_t max;$/;"	m	struct:__anon3
+min	include/sfmm.h	/^    uint16_t min;$/;"	m	struct:__anon3
+next	include/sfmm.h	/^    struct sf_free_header *next;$/;"	m	struct:sf_free_header	typeref:struct:sf_free_header::sf_free_header
+padded	include/sfmm.h	/^    uint64_t         padded : PADDED_BITS;$/;"	m	struct:__anon1
+padded	include/sfmm.h	/^    uint64_t         padded : PADDED_BITS;$/;"	m	struct:__anon2
+prev	include/sfmm.h	/^    struct sf_free_header *prev;$/;"	m	struct:sf_free_header	typeref:struct:sf_free_header::sf_free_header
+requested_size	include/sfmm.h	/^    uint64_t requested_size : REQUESTED_SIZE_BITS;$/;"	m	struct:__anon2
+seg_free_list	src/sfmm.c	/^free_list seg_free_list[4] = {$/;"	v
+sf_errno	src/sfmm.c	/^int sf_errno = 0;$/;"	v
+sf_footer	include/sfmm.h	/^} __attribute__((packed)) sf_footer;$/;"	t	typeref:struct:__anon2
+sf_free	src/sfmm.c	/^void sf_free(void *ptr) {$/;"	f
+sf_free_header	include/sfmm.h	/^struct sf_free_header{$/;"	s
+sf_free_header	include/sfmm.h	/^typedef struct sf_free_header sf_free_header;$/;"	t	typeref:struct:sf_free_header
+sf_header	include/sfmm.h	/^} __attribute__((packed)) sf_header;$/;"	t	typeref:struct:__anon1
+sf_malloc	src/sfmm.c	/^void *sf_malloc(size_t size) {$/;"	f
+sf_realloc	src/sfmm.c	/^void *sf_realloc(void *ptr, size_t size) {$/;"	f
+success	include/debug.h	69;"	d
+success	include/debug.h	75;"	d
+two_zeroes	include/sfmm.h	/^    uint64_t     two_zeroes : TWO_ZEROES;$/;"	m	struct:__anon1
+two_zeroes	include/sfmm.h	/^    uint64_t     two_zeroes : TWO_ZEROES;$/;"	m	struct:__anon2
+unused	include/sfmm.h	/^    uint64_t         unused : HEADER_UNUSED_BITS;$/;"	m	struct:__anon1
+warn	include/debug.h	59;"	d
+warn	include/debug.h	65;"	d
