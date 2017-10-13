@@ -28,21 +28,23 @@ int sf_errno = 0;
 
 /* User Defined Function */
 
-
+static void *traverse_list_to_malloc(size_t, size_t, size_t);
+static int call_new_srbk();
 static void *front_coalesce(sf_free_header *);
 static void remove_from_list(sf_free_header*, size_t);
 static void place(sf_free_header *, size_t, size_t ,size_t);
 static void place_request(sf_free_header *, size_t, size_t);
-static void *place_next(sf_free_header*, size_t size);
-static int checkWhichList(sf_free_header*);
+static void *place_next(sf_free_header*, size_t);
+static int check_list_ptr(sf_free_header*);
+static int check_list_size(size_t);
 static void add_to_seg_free_list(sf_free_header *, size_t);
 
 
 
 void *sf_malloc(size_t size) {
-
 	// size: requested by user; asize: rounded up size for allocator use (including header&footer)
 	int asize;
+	static int SRBK = 0;
 
 	// 1. Check if size == 0 || size > 4 pages
 
@@ -59,155 +61,30 @@ void *sf_malloc(size_t size) {
 
 	// 2. Find space to allocate
 
-	int startListNum = 0;
+	int startListNum = check_list_size(asize);
+	printf("ASIZE: %d   ", asize);
+	printf("Start Malloc Size:%d\n", startListNum);
 
-	while (startListNum <4){	// Which list to start with
-		if (asize >= seg_free_list[startListNum].min && asize <= seg_free_list[startListNum].max)
-			break;
-		startListNum++;
-	}
+	do {
 
+		sf_free_header *toMallocPtr = traverse_list_to_malloc(startListNum, size, asize);
 
-	/**** error-handle of Myself ****/
-	if (startListNum >= 4)	printf("Cannot find correct size in list. ERROR!!\n");
-	/********************************/
+		if (toMallocPtr != NULL)
+			return toMallocPtr;
 
-	printf("%d\n", startListNum);
-
-
-	for (;startListNum < 4; startListNum++){	// Find if there is free space in list, if no, next list
-		sf_free_header *ptr = seg_free_list[startListNum].head;
-
-		while (ptr != NULL){
-			uint64_t blockSize = ptr->header.block_size << 4;
-
-			printf("%p\n", &ptr->header);
-
-			if (blockSize >= asize){
-				// Check if splitting will cause splinter
-				if (blockSize < asize + MINBLKSIZE){	// Cause splinter, include all size
-					/*
-					1. set header alloc = 1, set header block_size = blockSize;
-					2. if block_size is not exactly, padded = 1;
-					3. do above to footer, and requested_size = size;
-					4. return (ptr+HEADER_SIZE)
-					*/
-
-					return NULL;
-
-				}
-				else {				// No splinter, split
-
-
-
-					return NULL;
-				}
-
+		// can't find free space to allocate
+		// 3. Not found in list, call sf_sbrk
+		if (SRBK < 4){
+			if (call_new_srbk() == -1)
+				return NULL;
 			}
-			else	ptr = ptr -> next;
-		}
-	}
+		SRBK++;
 
-	// 3. Not found in list, call sf_sbrk
-		// if above request still cannot be fulfilled, return NULL and sf_errno = ENOMEM
+	} while (SRBK <= 4);
 
+	// if above request still cannot be fulfilled, return NULL and sf_errno = ENOMEM
 
-	sf_free_header *sbrkPtr = sf_sbrk();
-
-	if (sbrkPtr == NULL){
-		sf_errno = ENOMEM;
-		return NULL;
-	}
-
-	sf_free_header *heap_end = get_heap_end();
-
-	// Place header, footer for srbk block. Then front coalesce, and place again.
-	place(sbrkPtr, (void*)heap_end - (void*)sbrkPtr, 0, 0);
-	sf_free_header *frontCoalescsPtr = front_coalesce(sbrkPtr);
-	place(frontCoalescsPtr, (void*)heap_end - (void*)frontCoalescsPtr, 0, 0);
-
-	sf_blockprint(frontCoalescsPtr);
-
-	// put in free list;
-	add_to_seg_free_list(frontCoalescsPtr, checkWhichList(frontCoalescsPtr));
-
-	sf_blockprint(frontCoalescsPtr);
-	sf_snapshot();
-
-
-	// Malloc
-	int listNum;
-	if ((listNum = checkWhichList(frontCoalescsPtr)) == -1)
-		/* Do something!!!  call sbrk again */
-		printf("Not fit in list\n");
-
-	/*
-	1. Traverse list of starting point
-	2. Check size
-		-> Will make Splinter:  give all
-		-> Won't 			 :  split
-	3. Split funtion
-		(1) Remove from list
-		(2) Allocate what we wanted
-		(3)	Allocate free for the other
-		(4) Add free to segregate list
-	*/
-
-	for (int i = listNum; i < 4; i++){	// Find if there is free space in list, if no, next list
-		sf_free_header *ptr = seg_free_list[startListNum].head;
-
-		while (ptr != NULL){
-			size_t blockSize = ptr->header.block_size << 4;
-
-			if (blockSize >= asize){
-				// Check if splitting will cause splinter
-				if (blockSize < asize + MINBLKSIZE){	// Cause splinter, include all size
-					/*
-					1. set header alloc = 1, set header block_size = blockSize;
-					2. if block_size is not exactly, padded = 1;
-					3. do above to footer, and requested_size = size;
-					4. return (ptr+HEADER_SIZE)
-					*/
-					remove_from_list(ptr, listNum);
-					place(ptr, blockSize, 1, 1);
-					place_request(ptr, blockSize, size);
-
-					sf_blockprint(ptr);
-
-					void *payloadPtr = (void*)ptr+ROWSIZE;
-
-					return payloadPtr;
-
-				}
-				else {				// No splinter, split
-
-					remove_from_list(ptr, listNum);
-					place(ptr, asize, 0, 1);
-					place_request(ptr, asize, size);
-					sf_free_header * splitFreeHeader = place_next(ptr, blockSize - asize);
-					add_to_seg_free_list(splitFreeHeader, checkWhichList(splitFreeHeader));
-
-
-					printf("allocated one\n");
-					sf_blockprint(ptr);
-					printf("Split new one\n");
-					sf_blockprint(splitFreeHeader);
-
-					void *payloadPtr = (void*)ptr+ROWSIZE;
-
-					return payloadPtr;
-				}
-
-			}
-			else	ptr = ptr -> next;
-		}
-
-		if (i == 3)
-			/* Cannot find, call sbrk */;
-
-	}
-
-
+	sf_errno = ENOMEM;
 	return NULL;
 
 }
@@ -267,7 +144,109 @@ void sf_free(void *ptr) {
 	return;
 }
 
+static void *traverse_list_to_malloc(size_t listNum, size_t size, size_t asize){
 
+	/*
+	1. Traverse list of starting point
+	2. Check size
+		-> Will make Splinter:  give all
+		-> Won't 			 :  split
+	3. Split funtion
+		(1) Remove from list
+		(2) Allocate what we wanted
+		(3)	Allocate free for the other
+		(4) Add free to segregate list
+	*/
+
+	for (int i = listNum; i < 4; i++){	// Find if there is free space in list, if no, next list
+		sf_free_header *ptr = seg_free_list[i].head;
+
+		while (ptr != NULL){
+			size_t blockSize = ptr->header.block_size << 4;
+
+			if (blockSize >= asize){
+				// Check if splitting will cause splinter
+				if (blockSize < asize + MINBLKSIZE){	// Cause splinter, include all size
+					/*
+					1. set header alloc = 1, set header block_size = blockSize;
+					2. if block_size is not exactly, padded = 1;
+					3. do above to footer, and requested_size = size;
+					4. return (ptr+HEADER_SIZE)
+					*/
+					remove_from_list(ptr, i);
+					place(ptr, blockSize, 1, 1);
+					place_request(ptr, blockSize, size);
+
+					printf("No splinter allocated one\n");
+					sf_blockprint(ptr);
+					sf_snapshot();
+
+					void *payloadPtr = (void*)ptr+ROWSIZE;
+
+					return payloadPtr;
+
+				}
+				else {				// No splinter, split
+
+					remove_from_list(ptr, i);
+					place(ptr, asize, 0, 1);
+					place_request(ptr, asize, size);
+					sf_free_header *splitFreeHeader = place_next(ptr, blockSize - asize);
+					add_to_seg_free_list(splitFreeHeader, check_list_ptr(splitFreeHeader));
+
+
+					printf("allocated one\n");
+					sf_blockprint(ptr);
+					printf("Split new one\n");
+					sf_blockprint(splitFreeHeader);
+					sf_snapshot();
+
+					void *payloadPtr = (void*)ptr+ROWSIZE;
+
+					return payloadPtr;
+				}
+
+			}
+			else	ptr = ptr -> next;
+		}
+
+	}
+
+	return NULL;
+
+
+}
+
+static int call_new_srbk(){
+
+	sf_free_header *sbrkPtr = sf_sbrk();
+
+	if (sbrkPtr == NULL){
+		sf_errno = ENOMEM;
+		return -1;
+	}
+
+	sf_free_header *heap_end = get_heap_end();
+
+	// Place header, footer for srbk block. Then front coalesce, and place again.
+	place(sbrkPtr, (void*)heap_end - (void*)sbrkPtr, 0, 0);
+	sf_free_header *frontCoalescsPtr = front_coalesce(sbrkPtr);
+	place(frontCoalescsPtr, (void*)heap_end - (void*)frontCoalescsPtr, 0, 0);
+
+
+	//	sf_blockprint(frontCoalescsPtr);
+
+	// Put in free list;
+	add_to_seg_free_list(frontCoalescsPtr, check_list_ptr(frontCoalescsPtr));
+
+
+	printf("New Srbk\n");
+	sf_blockprint(frontCoalescsPtr);
+	sf_snapshot();
+
+	return 0;
+
+}
 
 /* Not test it thoroughly yet */
 static void *front_coalesce(sf_free_header *ptr){
@@ -280,37 +259,44 @@ static void *front_coalesce(sf_free_header *ptr){
 	/* previous footer allocated = 0, then update own footer and previous header to new size */
 		int blockSize = prevFooter->block_size << 4;
 
-		sf_header *prevHeader = front-blockSize;
-		prevHeader->block_size += blockSize >> 4;
+		//sf_header *prevHeader = front-blockSize;
+		sf_free_header *toCoalesce = front-blockSize;
 
+		remove_from_list(toCoalesce, check_list_ptr(toCoalesce));
+
+		/*
+		prevHeader->block_size += blockSize >> 4;
 		sf_footer *myFooter = front + ptr->header.block_size - ROWSIZE;
 		myFooter->block_size = prevHeader->block_size;
-
 		front -= blockSize;
+		*/
+
+		place(toCoalesce, toCoalesce->header.block_size + ptr->header.block_size, 0, 0);
+
+		return toCoalesce;
 	}
 	return front;
 }
 
 static void remove_from_list(sf_free_header* ptr, size_t listNum){
-	//	TODO
 	//	Remove allocated area from segregated free list
 
-	sf_free_header *findPtr = seg_free_list[listNum].head;
+	/* If only one element lleft in list, all NULL */
+	if (ptr -> next == NULL && ptr -> prev == NULL){
+		seg_free_list[listNum].head = NULL;
+	}
+	else {
+		if (ptr -> next != NULL)
+			ptr -> next -> prev = ptr -> prev;
 
-	while (findPtr != NULL){
+		if (ptr -> prev != NULL)
+			ptr -> prev -> next = ptr -> next;
+		else	/* Take care list head to new head */
+			seg_free_list[listNum].head = ptr -> next;
+	}
 
-			if (findPtr == ptr){
-				// next pointer not NULL -> its previous gets my previous
-				if (ptr -> next != NULL)
-					ptr -> next -> prev = ptr -> prev;
-				// previous pointer  if NULL -> list head doesn't have next
-				if (ptr -> prev == seg_free_list[listNum].head)
-					seg_free_list[listNum].head = ptr -> next;
-				else
-					ptr -> prev -> next = ptr -> next;
-			}
-			else	findPtr = findPtr -> next;
-		}
+	return;
+
 }
 
 
@@ -319,13 +305,13 @@ static void place(sf_free_header *start, size_t size, size_t padded, size_t allo
 	void *voidstart = start;
 
 	sf_header *header = voidstart;
-	header->allocated = 0;
-	header->padded = 0;
+	header->allocated = allocated;
+	header->padded = padded;
 	header->block_size = size >> 4;
 
 	sf_footer *footer = voidstart + size - ROWSIZE;
-	footer->allocated = 0;
-	footer->padded = 0;
+	footer->allocated = allocated;
+	footer->padded = padded;
 	footer->block_size = size >> 4;
 
 }
@@ -351,14 +337,12 @@ static void *place_next(sf_free_header* start, size_t free_size){
 
 }
 
-static int checkWhichList(sf_free_header *ptr){
+static int check_list_size(size_t size){
 
 	int	listNum = 0;
-	size_t size = ptr->header.block_size << 4;
-
-//	printf("size: %lu\n", size);
 
 	while (listNum < 4){	// Which list to start with
+
 		if (size >= seg_free_list[listNum].min && size <= seg_free_list[listNum].max)
 			return listNum;
 		listNum++;
@@ -366,20 +350,27 @@ static int checkWhichList(sf_free_header *ptr){
 	return -1;
 }
 
+
+static int check_list_ptr(sf_free_header *ptr){
+	size_t size = ptr->header.block_size << 4;
+
+	return check_list_size(size);
+
+}
+
 static void add_to_seg_free_list(sf_free_header *newFree, size_t startListNum){
 
-	if (seg_free_list[startListNum].head == NULL)
-		newFree -> prev = (void *)&seg_free_list[startListNum].head;
-	else
-		newFree -> prev = seg_free_list[startListNum].head-> prev;
-
-	newFree -> next = seg_free_list[startListNum].head;
-
-	if (seg_free_list[startListNum].head != NULL)
+	if (seg_free_list[startListNum].head == NULL){
+		newFree -> next = NULL;
+		newFree -> prev = NULL;
+		seg_free_list[startListNum].head = newFree;
+	}
+	else {
+		newFree -> next = seg_free_list[startListNum].head;
+		newFree -> prev = NULL;
 		seg_free_list[startListNum].head -> prev = newFree;
-
-	seg_free_list[startListNum].head = newFree;
-
+		seg_free_list[startListNum].head = newFree;
+	}
 
 	printf("Seg list working\n" );
 
