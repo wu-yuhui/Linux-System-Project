@@ -154,17 +154,31 @@ void *sf_realloc(void *ptr, size_t size) {
 
 			// padding if it is not exact
 			thisHeader->header.padded = !(blockSize == asize);
-			sf_footer *thisFooter = (void*)thisHeader + blockSize -ROWSIZE;
+			sf_footer *thisFooter = (void*)(thisHeader + blockSize -ROWSIZE);
 			thisFooter->padded = !(blockSize == asize);
+
+			printf("No splinter allocated one\n");
+			sf_blockprint(thisHeader);
+			sf_snapshot();
 
 			return ptr;
 		}
 		else {
 			// SPLIT
-			place(ptr, asize, (size+16) != asize, 1);
-			place_request(ptr, asize, size);
-			sf_free_header *splitFreeHeader = place_next(ptr, blockSize - asize);
-			sf_free(splitFreeHeader);
+			place(thisHeader, asize, (size+16) != asize, 1);
+			place_request(thisHeader, asize, size);
+			sf_free_header *splitFreeHeader = place_next(thisHeader, blockSize - asize);
+
+			place_request(splitFreeHeader, blockSize - asize, 0);
+			sf_free_header *backCoalescePtr = back_coalesce(splitFreeHeader);
+			add_to_seg_free_list(backCoalescePtr, check_list_ptr(backCoalescePtr));
+
+
+			printf("allocated one\n");
+			sf_blockprint(thisHeader);
+			printf("Split new one\n");
+			sf_blockprint(backCoalescePtr);
+			sf_snapshot();
 
 			return ptr;
 
@@ -309,9 +323,9 @@ static int call_new_srbk(){
 	add_to_seg_free_list(frontCoalescePtr, check_list_ptr(frontCoalescePtr));
 
 
-	printf("New Srbk\n");
-	sf_blockprint(frontCoalescePtr);
-	sf_snapshot();
+//	printf("New Srbk\n");
+//	sf_blockprint(frontCoalescePtr);
+//	sf_snapshot();
 
 	return 0;
 
@@ -351,14 +365,14 @@ static void *back_coalesce(sf_free_header *ptr){
 	// TODO
 	void *back = (void*)ptr;
 	int thisBlockSize = ptr->header.block_size << 4;
-	sf_header *nextHeader = back + thisBlockSize;
+	sf_free_header *nextHeader = back + thisBlockSize;
 
-	if (nextHeader->allocated == 0){
-		int blockSize = nextHeader->block_size << 4;
+	if (nextHeader->header.allocated == 0){
+		int nextblockSize = nextHeader->header.block_size << 4;
 
-	//	printf("next_block_size: %d\n", blockSize);
-	//	printf("block_size:%d\n", thisBlockSize);
-		place(back, blockSize + thisBlockSize, 0, 0);
+		remove_from_list(nextHeader, check_list_ptr(nextHeader));
+
+		place(back, nextblockSize + thisBlockSize, 0, 0);
 
 		return back;
 	}
@@ -468,7 +482,7 @@ static void add_to_seg_free_list(sf_free_header *newFree, size_t startListNum){
 }
 
 static void check_usrptr_validation(void *ptr){
-		//The pointer is NULL
+	//The pointer is NULL
 	if (ptr == NULL)	abort();
 
 	//The header of the block is before heap_start or block ends after heap_end
