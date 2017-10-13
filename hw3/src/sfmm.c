@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #define	ROWSIZE	8
 #define	BASESIZE	16
@@ -31,6 +32,7 @@ int sf_errno = 0;
 static void *traverse_list_to_malloc(size_t, size_t, size_t);
 static int call_new_srbk();
 static void *front_coalesce(sf_free_header *);
+static void *back_coalesce(sf_free_header *);
 static void remove_from_list(sf_free_header*, size_t);
 static void place(sf_free_header *, size_t, size_t ,size_t);
 static void place_request(sf_free_header *, size_t, size_t);
@@ -38,6 +40,7 @@ static void *place_next(sf_free_header*, size_t);
 static int check_list_ptr(sf_free_header*);
 static int check_list_size(size_t);
 static void add_to_seg_free_list(sf_free_header *, size_t);
+static void check_usrptr_validation(void *ptr);
 
 
 
@@ -62,8 +65,8 @@ void *sf_malloc(size_t size) {
 	// 2. Find space to allocate
 
 	int startListNum = check_list_size(asize);
-	printf("ASIZE: %d   ", asize);
-	printf("Start Malloc Size:%d\n", startListNum);
+//	printf("ASIZE: %d   ", asize);
+//	printf("Start Malloc Size:%d\n", startListNum);
 
 	do {
 
@@ -91,6 +94,24 @@ void *sf_malloc(size_t size) {
 
 void *sf_realloc(void *ptr, size_t size) {
 
+	check_usrptr_validation(ptr);
+
+	if (size == 0){
+		sf_free(ptr);
+		return NULL;
+	}
+
+	int asize;
+	if (size <= BASESIZE)
+		asize = 2*BASESIZE;		/* at least 16 + header(8) + footer(8) = 32 */
+	else
+		asize = BASESIZE * ((size + BASESIZE + BASESIZE -1)/ BASESIZE);	/*Round up to payload % 16 = 0 + header, footer*/
+
+	sf_free_header *thisHeader = ptr - ROWSIZE;
+	int blockSize = thisHeader->header.block_size << 4;
+
+	if (blockSize < asize){
+
 	/*
 	1. Call sf_malloc to obtain a larger block
 	2. Call memcpy to copy the data in the block given by the user to the block
@@ -103,9 +124,17 @@ void *sf_realloc(void *ptr, size_t size) {
 	you do not need to set sf_errno in sf_realloc because sf_malloc should
 	take care of this.
 	*/
+		sf_free_header *largeMalloc = sf_malloc(size);
 
+		if (largeMalloc == NULL)	return NULL;
 
+		memcpy(largeMalloc, ptr, size);
+		sf_free(ptr);
 
+		return largeMalloc;
+
+	}
+	else{
 
 	/*
 	1. Splitting the returned block results in a splinter. In this case, do not
@@ -119,6 +148,32 @@ void *sf_realloc(void *ptr, size_t size) {
 	   free list). Return a pointer to the payload of the smaller block to the user
 	*/
 
+		if (blockSize < asize + MINBLKSIZE){
+			// No splinter
+			place_request(thisHeader, blockSize, size);
+
+			// padding if it is not exact
+			thisHeader->header.padded = !(blockSize == asize);
+			sf_footer *thisFooter = (void*)thisHeader + blockSize -ROWSIZE;
+			thisFooter->padded = !(blockSize == asize);
+
+			return ptr;
+		}
+		else {
+			// SPLIT
+			place(ptr, asize, (size+16) != asize, 1);
+			place_request(ptr, asize, size);
+			sf_free_header *splitFreeHeader = place_next(ptr, blockSize - asize);
+			sf_free(splitFreeHeader);
+
+			return ptr;
+
+
+		}
+
+
+	}
+
 
 	return NULL;
 }
@@ -126,20 +181,34 @@ void *sf_realloc(void *ptr, size_t size) {
 void sf_free(void *ptr) {
 
 	// 1. Check if pointer is invalid
-
-
-
-
-	//The pointer is NULL
-	//The header of the block is before heap_start or block ends after heap_end
-	//The alloc bit in the header or footer is 0
-	//The requested_size, block_size, and padded bits do not make sense when put together.
-	//For example, if requested_size + 16 != block_size, you know that the padded bit must be 1.
-	//The padded and alloc bits in the header and footer are inconsistent.
+	check_usrptr_validation(ptr);
 
 	// 2. Add new block to list
 		// Coalesce if needed
 		// Always first remove the to be coalesced free block out of list and insert it at top always
+
+	sf_header *thisHeader = ptr - ROWSIZE;
+	sf_footer *thisFooter = ptr - ROWSIZE*2 + (thisHeader->block_size << 4);
+
+	sf_free_header *thisFreeHeader = (sf_free_header *)thisHeader;
+	thisHeader->allocated = 0;
+	thisFooter->allocated = 0;
+	thisHeader->padded = 0;
+	thisFooter->padded = 0;
+	thisFooter->requested_size = 0;
+	//sf_blockprint(thisFreeHeader);
+	//sf_blockprint(thisHeader);
+	//sf_snapshot();
+
+	sf_free_header *backCoalescePtr = back_coalesce(thisFreeHeader);
+
+	add_to_seg_free_list(backCoalescePtr, check_list_ptr(backCoalescePtr));
+
+	printf("New Freed Memory\n");
+	sf_blockprint(backCoalescePtr);
+	sf_snapshot();
+
+
 
 	return;
 }
@@ -189,7 +258,7 @@ static void *traverse_list_to_malloc(size_t listNum, size_t size, size_t asize){
 				else {				// No splinter, split
 
 					remove_from_list(ptr, i);
-					place(ptr, asize, 0, 1);
+					place(ptr, asize, (size+16) != asize, 1);
 					place_request(ptr, asize, size);
 					sf_free_header *splitFreeHeader = place_next(ptr, blockSize - asize);
 					add_to_seg_free_list(splitFreeHeader, check_list_ptr(splitFreeHeader));
@@ -230,25 +299,25 @@ static int call_new_srbk(){
 
 	// Place header, footer for srbk block. Then front coalesce, and place again.
 	place(sbrkPtr, (void*)heap_end - (void*)sbrkPtr, 0, 0);
-	sf_free_header *frontCoalescsPtr = front_coalesce(sbrkPtr);
-	place(frontCoalescsPtr, (void*)heap_end - (void*)frontCoalescsPtr, 0, 0);
+	sf_free_header *frontCoalescePtr = front_coalesce(sbrkPtr);
+	place(frontCoalescePtr, (void*)heap_end - (void*)frontCoalescePtr, 0, 0);
 
 
 	//	sf_blockprint(frontCoalescsPtr);
 
 	// Put in free list;
-	add_to_seg_free_list(frontCoalescsPtr, check_list_ptr(frontCoalescsPtr));
+	add_to_seg_free_list(frontCoalescePtr, check_list_ptr(frontCoalescePtr));
 
 
 	printf("New Srbk\n");
-	sf_blockprint(frontCoalescsPtr);
+	sf_blockprint(frontCoalescePtr);
 	sf_snapshot();
 
 	return 0;
 
 }
 
-/* Not test it thoroughly yet */
+
 static void *front_coalesce(sf_free_header *ptr){
 	// TODO
 	// Front coalesce after sbrk if needed
@@ -277,6 +346,28 @@ static void *front_coalesce(sf_free_header *ptr){
 	}
 	return front;
 }
+
+static void *back_coalesce(sf_free_header *ptr){
+	// TODO
+	void *back = (void*)ptr;
+	int thisBlockSize = ptr->header.block_size << 4;
+	sf_header *nextHeader = back + thisBlockSize;
+
+	if (nextHeader->allocated == 0){
+		int blockSize = nextHeader->block_size << 4;
+
+	//	printf("next_block_size: %d\n", blockSize);
+	//	printf("block_size:%d\n", thisBlockSize);
+		place(back, blockSize + thisBlockSize, 0, 0);
+
+		return back;
+	}
+	return back;
+
+}
+
+
+
 
 static void remove_from_list(sf_free_header* ptr, size_t listNum){
 	//	Remove allocated area from segregated free list
@@ -372,6 +463,38 @@ static void add_to_seg_free_list(sf_free_header *newFree, size_t startListNum){
 		seg_free_list[startListNum].head = newFree;
 	}
 
-	printf("Seg list working\n" );
+//	printf("Seg list working\n" );
+
+}
+
+static void check_usrptr_validation(void *ptr){
+		//The pointer is NULL
+	if (ptr == NULL)	abort();
+
+	//The header of the block is before heap_start or block ends after heap_end
+	sf_header *thisHeader = ptr - ROWSIZE;
+	sf_footer *thisFooter = ptr - ROWSIZE*2 + (thisHeader->block_size << 4);
+
+
+	if (thisHeader < (sf_header*)get_heap_start() || thisFooter > (sf_footer*)get_heap_end())
+		abort();
+
+	//The alloc bit in the header or footer is 0
+	if (thisHeader->allocated == 0 || thisFooter->allocated == 0)
+		abort();
+
+	//The requested_size, block_size, and padded bits do not make sense when put together.
+	//For example, if requested_size + 16 != block_size, you know that the padded bit must be 1.
+
+	if ((thisHeader->block_size << 4) - thisFooter->requested_size > 16 && !thisHeader->padded)	abort();
+	if ((thisFooter->block_size << 4) - thisFooter->requested_size > 16 && !thisFooter->padded)	abort();
+	if ((thisHeader->block_size << 4) - thisFooter->requested_size <= 16 && thisHeader->padded)	abort();
+	if ((thisFooter->block_size << 4) - thisFooter->requested_size <= 16 && thisFooter->padded)	abort();
+
+	//The padded and alloc bits in the header and footer are inconsistent.
+	if (thisHeader->block_size != thisFooter->block_size || thisHeader->padded != thisFooter-> padded)
+		abort();
+
+	return;
 
 }
