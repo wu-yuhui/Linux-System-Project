@@ -89,7 +89,7 @@ Test(sf_memsuite_student, free_coalesce, .init = sf_mem_init, .fini = sf_mem_fin
 	cr_assert(sf_errno == 0, "sf_errno is not zero!");
 }
 
-Test(sf_memsuite_student, freelist, .init = sf_mem_init, .fini = sf_mem_fini) {
+Test(sf_memsuite_student, free_list, .init = sf_mem_init, .fini = sf_mem_fini) {
 	/* void *u = */ sf_malloc(1);          //32
 	void *v = sf_malloc(LIST_1_MIN); //48
 	void *w = sf_malloc(LIST_2_MIN); //160
@@ -185,3 +185,87 @@ Test(sf_memsuite_student, realloc_smaller_block_free_block, .init = sf_mem_init,
 //DO NOT DELETE THESE COMMENTS
 //############################################
 
+Test(sf_memsuite_student, free_NULL_pointer, .init = sf_mem_init, .fini = sf_mem_fini, .signal = SIGABRT){
+	/*
+	Free NULL (not allocated) pointers.
+	1. No space to malloc, sf_errno == ENOMEM
+	2. Free NULL pointer causes system to abort.
+	*/
+
+	sf_errno = 0;
+	void *x = sf_malloc(4*PAGE_SZ);
+	sf_free(x);
+	cr_assert(sf_errno == ENOMEM, "sf_errno is ENOMEM!");
+}
+
+Test(sf_memsuite_student, malloc_after_NULL, .init = sf_mem_init, .fini = sf_mem_fini, .signal = SIGABRT){
+	/*
+	Malloc After 4 calls of sf_sbrk.
+	1. x -> No space to malloc, sf_errno == ENOMEM, x = NULL
+	2. Malloc of 2 pages get 2*4096+16 = 8208, which free space is 16384-8208 =8176
+	3. Allocated bit is 0.
+	*/
+
+	sf_errno = 0;
+    void* x = sf_malloc(PAGE_SZ*4);
+    void* z = sf_malloc(PAGE_SZ*2);
+
+    free_list *fl_z = &seg_free_list[find_list_index_from_size(8176)];
+
+    cr_assert_null(x, "x is NULL!");
+    cr_assert(sf_errno == ENOMEM, "sf_errno is ENOMEM!");
+    cr_assert(fl_z->head->header.block_size << 4 == 8176);
+    cr_assert(fl_z->head->header.allocated == 0);
+
+    sf_free(z);
+    sf_free(x);
+
+}
+
+Test(sf_memsuite_student, malloc_size_0, .init = sf_mem_init, .fini = sf_mem_fini){
+	/*
+	Malloc size 0
+	x return NULL, and sf_errno = EINVAL
+	*/
+
+	sf_errno = 0;
+	void *x = sf_malloc(0);
+
+	cr_assert(sf_errno = EINVAL, "sf_errno will become EINVAL!");
+	cr_assert_null(x, "x is NULL!");
+}
+
+Test(sf_memsuite_student, malloc_size_morethan4pages, .init = sf_mem_init, .fini = sf_mem_fini){
+	/*
+	Malloc more that 4 pages
+	x return NULL, and sf_errno = EINVAL
+	*/
+
+	sf_errno = 0;
+	void *x = sf_malloc(8*PAGE_SZ);
+
+	cr_assert(sf_errno = EINVAL, "sf_errno will become EINVAL!");
+	cr_assert_null(x, "x is NULL!");
+}
+
+Test(sf_memsuite_student, realloc_zero, .init = sf_mem_init, .fini = sf_mem_fini, .signal = SIGABRT){
+	/*
+	Realloc some space to size 0
+	1. realloc(x,0) equals to sf_free(x)
+	2. return pointer as NULL.
+	3. Free space = a full page
+	4. freeing the pointers (NULL) causes Abort
+	*/
+
+	void *x = sf_malloc(100);
+	void *z = sf_realloc(x, 0);
+
+	free_list *fl_x = &seg_free_list[find_list_index_from_size(4000)];
+
+	cr_assert_null(z, "z is freed and z is null!");
+	cr_assert(fl_x->head->header.block_size << 4 == 4096);
+
+	sf_free(x);
+	sf_free(z);
+
+}
