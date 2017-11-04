@@ -26,13 +26,38 @@ int main(int argc, char *argv[], char* envp[]) {
 
         input = readline("> ");
 
+
+        // If EOF is read (aka ^D) readline returns NULL
+        if(input == NULL) {
+            continue;
+        }
+
+
+        /*
         write(1, "\e[s", strlen("\e[s"));
         write(1, "\e[20;10H", strlen("\e[20;10H"));
         write(1, "SomeText", strlen("SomeText"));
         write(1, "\e[u", strlen("\e[u"));
+        */
+        char manInput[256];
+        strcpy(manInput, input);
 
-        // If EOF is read (aka ^D) readline returns NULL
-        if(input == NULL) {
+        printf("The manInput: %s\n", manInput);
+
+        // Parsing Input
+        char inputArray[32][128] = {};
+        char *p = strtok(input, " ");
+        int i = 0;
+        while(p != NULL) {
+            memcpy(inputArray[i], p, strlen(p));
+            // printf("memcpy of Input Array Elements [%d] %s DONE\n", i, p);
+            p = strtok(NULL, " ");
+            i++;
+        }
+
+        // Check if not builtIn command -> skip iteration
+        if (not_builtin(inputArray[0])){
+            printf(BUILTIN_ERROR, inputArray[0]);
             continue;
         }
 

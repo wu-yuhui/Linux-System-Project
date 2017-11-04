@@ -10,3 +10,6 @@
 #define EXEC_ERROR     "sfish exec error: %s\n"
 
 #endif
+
+int run_command(char*);
+int not_builtin(char*);
