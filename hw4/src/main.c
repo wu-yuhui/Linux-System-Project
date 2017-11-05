@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <readline/readline.h>
+#include <linux/limits.h>
 
 #include "sfish.h"
 #include "debug.h"
@@ -24,7 +25,26 @@ int main(int argc, char *argv[], char* envp[]) {
 
     do {
 
-        input = readline("> ");
+        char currentPath[PATH_MAX] = {};
+        if (getcwd(currentPath, PATH_MAX) == NULL){
+            printf(BUILTIN_ERROR, "Wrong Current Path");
+            return 0;
+        }
+
+        //printf("Current Path:%s\n", currentPath);
+
+        char *homedir = getenv("HOME");
+        char promptPath[PATH_MAX] = "~";
+        if (strncmp(currentPath, homedir, strlen(homedir)) == 0){
+            strcat(promptPath, currentPath+strlen(homedir));
+        }
+        else
+            strcpy(promptPath, currentPath);
+
+        char *postfix = " :: yuhwu >> ";
+        strcat(promptPath, postfix);
+
+        input = readline(promptPath);
 
 
         // If EOF is read (aka ^D) readline returns NULL
@@ -32,13 +52,16 @@ int main(int argc, char *argv[], char* envp[]) {
             continue;
         }
 
-
         /*
         write(1, "\e[s", strlen("\e[s"));
         write(1, "\e[20;10H", strlen("\e[20;10H"));
         write(1, "SomeText", strlen("SomeText"));
         write(1, "\e[u", strlen("\e[u"));
         */
+
+        eval(input, envp);
+
+/*
         char manInput[256];
         strcpy(manInput, input);
 
@@ -47,12 +70,12 @@ int main(int argc, char *argv[], char* envp[]) {
         // Parsing Input
         char inputArray[32][128] = {};
         char *p = strtok(input, " ");
-        int i = 0;
+        int inputNum = 0;
         while(p != NULL) {
-            memcpy(inputArray[i], p, strlen(p));
+            memcpy(inputArray[inputNum], p, strlen(p));
             // printf("memcpy of Input Array Elements [%d] %s DONE\n", i, p);
             p = strtok(NULL, " ");
-            i++;
+            inputNum++;
         }
 
         // Check if not builtIn command -> skip iteration
@@ -60,10 +83,10 @@ int main(int argc, char *argv[], char* envp[]) {
             printf(BUILTIN_ERROR, inputArray[0]);
             continue;
         }
-
+*/
 
         // Currently nothing is implemented
-        printf(EXEC_NOT_FOUND, input);
+//        printf(EXEC_NOT_FOUND, input);
 
         // You should change exit to a "builtin" for your hw.
         exited = strcmp(input, "exit") == 0;

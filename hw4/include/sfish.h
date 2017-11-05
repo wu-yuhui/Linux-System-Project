@@ -11,5 +11,11 @@
 
 #endif
 
-int run_command(char*);
-int not_builtin(char*);
+//int run_command(char*);
+//int builtin(char*);
+void eval(char*, char**);
+void parseline(char *, char **);
+int builtin_command(char**);
+void print_help();
+int change_to_old_path();
+int change_to_path(char**);
