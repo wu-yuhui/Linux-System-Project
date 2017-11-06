@@ -6,6 +6,10 @@
 #include <readline/readline.h>
 #include <sys/wait.h>
 #include <linux/limits.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "sfish.h"
 #include "debug.h"
@@ -26,7 +30,59 @@ void eval(char *cmdline, char** envp){
 
     strcpy(buf, cmdline);   /* Manipulate buf, prevent modifying the input */
     //bg = parseline(buf, argv);
-    parseline(buf, argv);
+
+    if (how_much_redirect(cmdline)){
+        printf(SYNTAX_ERROR, "Redirection too much");
+        return;
+    }
+
+    // See which redir_case
+    int redir_case = 0;
+    char *p = buf;
+    int already_in = 0;
+    for (int i = 0; i < strlen(buf); i++){
+        if (*(p+i) == '<'){
+            redir_case++;
+            already_in++;
+        }
+        if (*(p+i) == '>'){
+            if (already_in) redir_case += 3;
+            else    redir_case += 2;
+        }
+    }
+    /*
+    <:  1
+    >:  2
+    ><: 3
+    <>: 4
+    */
+
+    char in_target[MAXLINE] = {};
+    char out_target[MAXLINE] = {};
+
+
+    switch(redir_case){
+        case 1:     // <
+            redir_case1(buf, argv, in_target);
+            break;
+        case 2:     // >
+            redir_case2(buf, argv, out_target);
+            break;
+        case 3:     // ><
+            redir_case3(buf, argv, in_target, out_target);
+            break;
+        case 4:     // <>
+            redir_case4(buf, argv, in_target, out_target);
+            break;
+        default:
+            parseline(buf, argv);
+            break;
+    }
+
+/*    for (int i = 0; argv[i] != NULL; i++){
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
+*/
 
     if (argv[0] == NULL){
         printf("argv[0] == NULL\n");
@@ -38,7 +94,28 @@ void eval(char *cmdline, char** envp){
 
         // run
         if ((pid = fork()) == 0){
-        //////////////////////////////////////  set
+            //printf("Child pid is %d\n", getpid());
+        //////////////////////////////////////  setmask
+
+            if (strlen(in_target)){  // redir in target exist
+                int in;
+                if((in = open(in_target, O_RDONLY)) < 0){
+                    perror("read");
+                    exit(1);
+                }
+                dup2(in, STDIN_FILENO);
+                close(in);
+
+            }
+            if (strlen(out_target)){ // redir out target exist
+                int out;
+                if((out = open(out_target, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR)) < 0){
+                    perror("write");
+                    exit(1);
+                }
+                dup2(out, STDOUT_FILENO);
+                close(out);
+            }
            // Child run user-job
             if (execvp(argv[0], argv) < 0){
                 printf(EXEC_NOT_FOUND, argv[0]);
@@ -50,7 +127,10 @@ void eval(char *cmdline, char** envp){
         ///////////////////////////    sigsuspend
         int status;
         if(waitpid(pid, &status, WUNTRACED) < 0)
-            printf("waitfg: waitpid error\n");
+            if (WIFEXITED(status))
+                printf("Child %d terminated with exit status %d\n", pid, WEXITSTATUS(status));
+
+        //printf("Parent pid is %d\n", getpid());
 
     }
 
@@ -86,22 +166,6 @@ void parseline(char *buf, char **argv){
     }
     argv[argc] = NULL;
 
-/*
-    printf("Input is 1!!\n");
-    char *p = strtok(buf, " ");
-    printf("Input is 2!!\n");
-    int inputNum = 0;
-    while(p != NULL) {
-        printf("Input is 3!!\n");
-        memcpy(argv[inputNum], p, strlen(p));
-        // printf("memcpy of Input Array Elements [%d] %s DONE\n", i, p);
-        printf("Input is 4!!\n");
-        p = strtok(NULL, " ");
-        printf("Input is 5!!\n");
-        inputNum++;
-    }
-    argv[inputNum] = NULL;
-*/
     /*
     if(argc == 0){
         printf("Input is NULL!!\n");
@@ -219,4 +283,101 @@ int change_to_path(char **input){
     }
 
     return 1;
+}
+
+int how_much_redirect(char *cmdline){
+    char *ptr = cmdline;
+    int in = 0;
+    int out = 0;
+
+    int count = 0;
+    int cmdlen = strlen(cmdline);
+
+    while (count < cmdlen){
+        if (*(ptr+count) == '<')
+            in++;
+        else if (*(ptr+count) == '>')
+            out++;
+        count++;
+    }
+
+    if (in > 1 || out > 1)
+        return 1;
+    else return 0;
+}
+
+
+void redir_case1(char *buf, char **argv, char *in_target){
+    char *p = buf;
+    for (int i = 0; i < strlen(buf); i++){
+        if (*(p+i) == '<')
+            *(p+i) = ' ';
+    }
+    parseline(buf, argv);
+
+    int argvLength = 0;
+    while(argv[argvLength] != NULL)
+        argvLength++;
+    // STDiN to argv[argvLength-1];
+
+    strcpy(in_target, argv[argvLength-1]);
+    argv[argvLength-1] = NULL;
+
+}
+
+void redir_case2(char *buf, char **argv, char *out_target){
+    char *p = buf;
+    for (int i = 0; i < strlen(buf); i++){
+        if (*(p+i) == '>')
+            *(p+i) = ' ';
+    }
+    parseline(buf, argv);
+
+    int argvLength = 0;
+    while(argv[argvLength] != NULL)
+        argvLength++;
+    // STDiN to argv[argvLength-1];
+
+    strcpy(out_target, argv[argvLength-1]);
+    argv[argvLength-1] = NULL;
+}
+
+
+void redir_case3(char *buf, char **argv, char *in_target, char * out_target){
+    char *p = buf;
+    for (int i = 0; i < strlen(buf); i++){
+        if (*(p+i) == '>' || *(p+i) == '<')
+            *(p+i) = ' ';
+    }
+    parseline(buf, argv);
+
+    int argvLength = 0;
+    while(argv[argvLength] != NULL)
+        argvLength++;
+    // STDiN to argv[argvLength-1];
+    strcpy(in_target, argv[argvLength-1]);
+    strcpy(out_target, argv[argvLength-2]);
+
+    argv[argvLength-1] = NULL;
+    argv[argvLength-2] = NULL;
+}
+
+void redir_case4(char *buf, char **argv, char *in_target, char * out_target){
+    char *p = buf;
+    for (int i = 0; i < strlen(buf); i++){
+        if (*(p+i) == '>' || *(p+i) == '<')
+            *(p+i) = ' ';
+    }
+    parseline(buf, argv);
+
+    int argvLength = 0;
+    while(argv[argvLength] != NULL)
+        argvLength++;
+    // STDiN to argv[argvLength-1];
+    strcpy(in_target, argv[argvLength-2]);
+    strcpy(out_target, argv[argvLength-1]);
+
+
+    argv[argvLength-1] = NULL;
+    argv[argvLength-2] = NULL;
 }

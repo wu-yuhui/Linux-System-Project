@@ -19,3 +19,8 @@ int builtin_command(char**);
 void print_help();
 int change_to_old_path();
 int change_to_path(char**);
+int how_much_redirect(char *);
+void redir_case1(char *, char **, char *);
+void redir_case2(char *, char **, char *);
+void redir_case3(char *, char **, char *, char *);
+void redir_case4(char *, char **, char *, char *);

@@ -24,14 +24,12 @@ int main(int argc, char *argv[], char* envp[]) {
     }
 
     do {
-
+        // Modify prompt prefix
         char currentPath[PATH_MAX] = {};
         if (getcwd(currentPath, PATH_MAX) == NULL){
             printf(BUILTIN_ERROR, "Wrong Current Path");
             return 0;
         }
-
-        //printf("Current Path:%s\n", currentPath);
 
         char *homedir = getenv("HOME");
         char promptPath[PATH_MAX] = "~";
@@ -44,8 +42,9 @@ int main(int argc, char *argv[], char* envp[]) {
         char *postfix = " :: yuhwu >> ";
         strcat(promptPath, postfix);
 
-        input = readline(promptPath);
 
+        // Read from prompt
+        input = readline(promptPath);
 
         // If EOF is read (aka ^D) readline returns NULL
         if(input == NULL) {
@@ -59,34 +58,8 @@ int main(int argc, char *argv[], char* envp[]) {
         write(1, "\e[u", strlen("\e[u"));
         */
 
+        // MAIN evaluation
         eval(input, envp);
-
-/*
-        char manInput[256];
-        strcpy(manInput, input);
-
-        printf("The manInput: %s\n", manInput);
-
-        // Parsing Input
-        char inputArray[32][128] = {};
-        char *p = strtok(input, " ");
-        int inputNum = 0;
-        while(p != NULL) {
-            memcpy(inputArray[inputNum], p, strlen(p));
-            // printf("memcpy of Input Array Elements [%d] %s DONE\n", i, p);
-            p = strtok(NULL, " ");
-            inputNum++;
-        }
-
-        // Check if not builtIn command -> skip iteration
-        if (not_builtin(inputArray[0])){
-            printf(BUILTIN_ERROR, inputArray[0]);
-            continue;
-        }
-*/
-
-        // Currently nothing is implemented
-//        printf(EXEC_NOT_FOUND, input);
 
         // You should change exit to a "builtin" for your hw.
         exited = strcmp(input, "exit") == 0;
