@@ -22,7 +22,7 @@ void eval(char *cmdline, char** envp){
     char *argv[MAXARGS] = {};    /* Argument list execve() */
     char buf[MAXLINE];      /* Holds modified command line */
     // int bg;                 /* background or foreground */
-    // pid_t pid;
+    pid_t pid;
 
     strcpy(buf, cmdline);   /* Manipulate buf, prevent modifying the input */
     //bg = parseline(buf, argv);
@@ -33,31 +33,26 @@ void eval(char *cmdline, char** envp){
         return;
     }
 
-    if(!builtin_command(argv)){
-        printf("Not found in built in!!\n");
+    if(builtin_command(argv) == -1){
+        // Other than built-in commands
 
-/*
         // run
         if ((pid = fork()) == 0){
         //////////////////////////////////////  set
            // Child run user-job
-            if (execve(argv[0], argv, envp) < 0){
+            if (execvp(argv[0], argv) < 0){
                 printf(EXEC_NOT_FOUND, argv[0]);
                 //exit(0);
             }
         }
-
         //Parent
-        if(!bg){
         ///////////////////////////    tcsetgrp
         ///////////////////////////    sigsuspend
-            int status;
-            if(waitpid(pid, &status, WUNTRACED) < 0)
-                printf("waitfg: waitpid error\n");
-        }
-        else
-            printf("%d %s", pid, cmdline);
-*/    }
+        int status;
+        if(waitpid(pid, &status, WUNTRACED) < 0)
+            printf("waitfg: waitpid error\n");
+
+    }
 
 /*
     for(int i = 0; argv[i] != NULL; i++){
@@ -125,7 +120,10 @@ void parseline(char *buf, char **argv){
 
 }
 int builtin_command(char** input){
-
+    /*  1: SUCCESS
+        0: FAIL
+        -1: NOT FOUND
+    */
 
     if (!strcmp(input[0], "help"))
         print_help();
@@ -161,8 +159,6 @@ int builtin_command(char** input){
             if (!change_to_path(input))
                 return 0;
         }
-//            printf(BUILTIN_ERROR, input[0]);
-
     }
     else if (!strcmp(input[0], "pwd")){    //getcwd(3)
         char currentPath[PATH_MAX] = {};
@@ -173,7 +169,7 @@ int builtin_command(char** input){
         else printf("%s\n", currentPath);
     }
     else
-        return 0;
+        return -1;
 
     return 1;
 }
@@ -182,10 +178,10 @@ int builtin_command(char** input){
 void print_help(){
     printf("=====\n");
     printf("These shell commands are defined internally.  Type `help' to see this list.\n");
-    printf(" cd [dir]\n");
-    printf(" exit\n");
-    printf(" help\n");
-    printf(" pwd\n");
+    printf(" cd [dir]:  change to specific directory\n");
+    printf(" exit:      terminate program and exit\n");
+    printf(" help:      print help manual\n");
+    printf(" pwd:       current directory path\n");
     printf("=====\n");
 }
 
