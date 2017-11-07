@@ -128,7 +128,7 @@ void eval(char *cmdline, char** envp){
                 if (strlen(in_target)){  // redir in target exist
                     int in;
                     if((in = open(in_target, O_RDONLY)) < 0){
-                        perror("read");
+                        printf(EXEC_ERROR, "Open ERROR");
                         exit(1);
                     }
                     dup2(in, STDIN_FILENO);
@@ -138,7 +138,7 @@ void eval(char *cmdline, char** envp){
                 if (strlen(out_target)){ // redir out target exist
                     int out;
                     if((out = open(out_target, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR)) < 0){
-                        perror("write");
+                        printf(EXEC_ERROR, "Open ERROR");
                         exit(1);
                     }
                     dup2(out, STDOUT_FILENO);
@@ -216,7 +216,7 @@ int builtin_command(char** input){
                 printf(BUILTIN_ERROR, input[0]);
                 return 0;
             }
-            printf("HOME: %s\n", home_environ);
+            //printf("HOME: %s\n", home_environ);
             home[1] = home_environ;
 
             if (!change_to_path(home))
