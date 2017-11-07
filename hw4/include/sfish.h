@@ -24,3 +24,6 @@ void redir_case1(char *, char **, char *);
 void redir_case2(char *, char **, char *);
 void redir_case3(char *, char **, char *, char *);
 void redir_case4(char *, char **, char *, char *);
+
+int how_many_pipes(char*);
+int run_pipe(int, char **);
