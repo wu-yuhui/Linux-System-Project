@@ -37,7 +37,7 @@ queue_t *create_queue(void) {
     if (sem_init(&myQueue->items, 0, 0) != 0)    //initialize queue but not mutexes inside
         return NULL;                            // Errno?
     if (pthread_mutex_init(&myQueue->lock, NULL) != 0)
-        return 0;                               // Errno?
+        return NULL;                               // Errno?
 
     myQueue->invalid = 0;
 
