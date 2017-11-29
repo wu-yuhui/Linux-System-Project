@@ -20,8 +20,11 @@ void print_queue(queue_t *self){
     return;
 }
 
-
-
+/*
+void destroy_function(void *item){
+    free(item);
+}
+*/
 
 queue_t *create_queue(void) {
 
@@ -49,9 +52,26 @@ bool invalidate_queue(queue_t *self, item_destructor_f destroy_function) {
         errno = EINVAL;
         return false;
     }
+    if (self->invalid){
+        errno = EINVAL;
+        return false;
+    }
 
+    pthread_mutex_lock(&self->lock);
 
-    return false;
+    queue_node_t *ptr = self->front;
+    while(ptr != NULL){
+        destroy_function(ptr->item);
+        queue_node_t *toFree = ptr;
+        ptr = ptr->next;
+        free(toFree);
+        //print_queue(self);
+    }
+    self->invalid = 1;
+
+    pthread_mutex_unlock(&self->lock);
+
+    return true;
 }
 
 bool enqueue(queue_t *self, void *item) {
@@ -64,6 +84,8 @@ bool enqueue(queue_t *self, void *item) {
         errno = EINVAL;
         return false;
     }
+
+    pthread_mutex_lock(&self->lock);
 
     queue_node_t *thisNode = calloc(1, sizeof(queue_node_t));
     /////////// if (thisNode == NULL)    return false;
@@ -85,6 +107,8 @@ bool enqueue(queue_t *self, void *item) {
         errno = EINVAL;
         return false;
     }
+
+    pthread_mutex_unlock(&self->lock);
 
     // print_queue(self);
 
