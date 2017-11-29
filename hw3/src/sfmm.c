@@ -65,8 +65,8 @@ void *sf_malloc(size_t size) {
 	// 2. Find space to allocate
 
 	int startListNum = check_list_size(asize);
-//	printf("ASIZE: %d   ", asize);
-//	printf("Start Malloc Size:%d\n", startListNum);
+	//	printf("ASIZE: %d   ", asize);
+	//	printf("Start Malloc Size:%d\n", startListNum);
 
 	do {
 
@@ -157,10 +157,10 @@ void *sf_realloc(void *ptr, size_t size) {
 			sf_footer *thisFooter = (void*)(thisHeader + blockSize -ROWSIZE);
 			thisFooter->padded = !(blockSize == asize);
 
-/*			printf("No splinter allocated one\n");
+	/*			printf("No splinter allocated one\n");
 			sf_blockprint(thisHeader);
 			sf_snapshot();
-*/
+	*/
 			return ptr;
 		}
 		else {
@@ -174,12 +174,12 @@ void *sf_realloc(void *ptr, size_t size) {
 			add_to_seg_free_list(backCoalescePtr, check_list_ptr(backCoalescePtr));
 
 
-/*			printf("allocated one\n");
+	/*			printf("allocated one\n");
 			sf_blockprint(thisHeader);
 			printf("Split new one\n");
 			sf_blockprint(backCoalescePtr);
 			sf_snapshot();
-*/
+	*/
 			return ptr;
 
 
@@ -218,10 +218,10 @@ void sf_free(void *ptr) {
 
 	add_to_seg_free_list(backCoalescePtr, check_list_ptr(backCoalescePtr));
 
-/*	printf("New Freed Memory\n");
+	/*	printf("New Freed Memory\n");
 	sf_blockprint(backCoalescePtr);
 	sf_snapshot();
-*/
+	*/
 
 
 	return;
@@ -260,10 +260,10 @@ static void *traverse_list_to_malloc(size_t listNum, size_t size, size_t asize){
 					place(ptr, blockSize, 1, 1);
 					place_request(ptr, blockSize, size);
 
-/*					printf("No splinter allocated one\n");
+	/*					printf("No splinter allocated one\n");
 					sf_blockprint(ptr);
 					sf_snapshot();
-*/
+	*/
 					void *payloadPtr = (void*)ptr+ROWSIZE;
 
 					return payloadPtr;
@@ -278,12 +278,12 @@ static void *traverse_list_to_malloc(size_t listNum, size_t size, size_t asize){
 					add_to_seg_free_list(splitFreeHeader, check_list_ptr(splitFreeHeader));
 
 
-/*					printf("allocated one\n");
+	/*					printf("allocated one\n");
 					sf_blockprint(ptr);
 					printf("Split new one\n");
 					sf_blockprint(splitFreeHeader);
 					sf_snapshot();
-*/
+	*/
 					void *payloadPtr = (void*)ptr+ROWSIZE;
 
 					return payloadPtr;
@@ -323,9 +323,9 @@ static int call_new_srbk(){
 	add_to_seg_free_list(frontCoalescePtr, check_list_ptr(frontCoalescePtr));
 
 
-//	printf("New Srbk\n");
-//	sf_blockprint(frontCoalescePtr);
-//	sf_snapshot();
+	//	printf("New Srbk\n");
+	//	sf_blockprint(frontCoalescePtr);
+	//	sf_snapshot();
 
 	return 0;
 
@@ -477,7 +477,7 @@ static void add_to_seg_free_list(sf_free_header *newFree, size_t startListNum){
 		seg_free_list[startListNum].head = newFree;
 	}
 
-//	printf("Seg list working\n" );
+	//	printf("Seg list working\n" );
 
 }
 
