@@ -23,10 +23,11 @@ int main(int argc, char *argv[]) {
         enqueue(tmp, a);
     }
 
-    invalidate_queue(tmp, destroy_function);
-
     for (int j = 0; j < 5; j++)
         dequeue(tmp);
+
+    invalidate_queue(tmp, destroy_function);
+
 
     exit(0);
 }
