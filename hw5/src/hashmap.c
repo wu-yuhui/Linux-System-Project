@@ -23,7 +23,8 @@ hashmap_t *create_map(uint32_t capacity, hash_func_f hash_function, destructor_f
     myHashMap->nodes = calloc(capacity, sizeof(map_node_t));    // Calloc Capacity * MapNodes
     if (myHashMap->nodes == NULL)   return NULL;
     for (int initNode = 0; initNode < capacity; initNode++){    // Initialize each node (Only tombstone)
-        myHashMap->nodes->tombstone = 0;
+        (myHashMap->nodes)[initNode] = MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+        // myHashMap->nodes->tombstone = false;
     }
     myHashMap->hash_function = hash_function;
     myHashMap->destroy_function = destroy_function;
@@ -45,14 +46,19 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
         errno = EINVAL;
         return false;
     }
+    if (self->invalid || self->capacity == 0 || self->nodes == NULL){
+        errno = EINVAL;
+        return false;
+    }
 
     map_node_t *iterNode = self->nodes;
     int countNode = get_index(self, key);
     do{
         if (iterNode[countNode].key.key_base == NULL){
-            iterNode[countNode].key = key;
-            iterNode[countNode].val = val;
-            iterNode[countNode].tombstone = 0;
+            // iterNode[countNode].key = key;
+            // iterNode[countNode].val = val;
+            // iterNode[countNode].tombstone = false;
+            iterNode[countNode] =  MAP_NODE(key, val, false);
             self->size++;   // Adding new
             return true;
         }
@@ -67,7 +73,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 
     if (force == true){
         /* Overwrite & Evict */
-        self->destroy_function(iterNode[countNode].key, iterNode[countNode].val);
+        self->destroy_function(iterNode[countNode].key, iterNode[countNode].val); // ?????
         iterNode[countNode].key = key;
         iterNode[countNode].val = val;
         return true;
@@ -79,17 +85,110 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
 }
 
 map_val_t get(hashmap_t *self, map_key_t key) {
-    return MAP_VAL(NULL, 0);
+    if (self == NULL || key.key_base == NULL || key.key_len == 0){
+        errno = EINVAL;
+        return MAP_VAL(NULL, 0);
+    }
+    if (self->invalid || self->capacity == 0 || self->nodes == NULL){
+        errno = EINVAL;
+        return MAP_VAL(NULL, 0);
+    }
+
+    map_node_t *iterNode = self->nodes;
+    int countNode = get_index(self, key);
+    do{
+        if (iterNode[countNode].key.key_base == key.key_base && iterNode[countNode].key.key_len == key.key_len){
+            return iterNode[countNode].val;
+        }
+        else if (iterNode[countNode].key.key_base == NULL && iterNode[countNode].tombstone == false){
+            return MAP_VAL(NULL, 0);    // empty node & no tomb -> Not found
+        }
+        countNode = (countNode+1) % self->capacity;     // Not found yet or Empty but have tombstone -> continues next
+
+    }while (countNode != get_index(self, key));
+
+    return MAP_VAL(NULL, 0);    // All map not found
 }
 
 map_node_t delete(hashmap_t *self, map_key_t key) {
+    if (self == NULL || key.key_base == NULL || key.key_len == 0){
+        errno = EINVAL;
+        return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+    }
+    if (self->invalid || self->capacity == 0 || self->nodes == NULL){
+        errno = EINVAL;
+        return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+    }
+
+    /*
+        1. save node in stack
+        2. change map to zero
+        3. set tombstone to 1
+        4. return MAP_NODE
+
+        Not found:  return NULL,0
+        Logic same as get.
+    */
+
+    map_node_t *iterNode = self->nodes;
+    int countNode = get_index(self, key);
+    do{
+        if (iterNode[countNode].key.key_base == key.key_base && iterNode[countNode].key.key_len == key.key_len){
+            /* Got It */
+            map_node_t toDelete = iterNode[countNode];
+            iterNode[countNode] =  MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), true);    // Clear and have tombstone
+            self->size--;
+            return toDelete;
+        }
+        else if (iterNode[countNode].key.key_base == NULL && iterNode[countNode].tombstone == false){
+            return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);    // empty node & no tomb -> Not found
+        }
+        countNode = (countNode+1) % self->capacity;     // Not found yet or Empty but have tombstone -> continues next
+
+    }while (countNode != get_index(self, key));
+
     return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);
+
 }
 
 bool clear_map(hashmap_t *self) {
+
+    if (self == NULL){
+        errno = EINVAL;
+        return false;
+    }
+    if (self->invalid || self->capacity == 0 || self->nodes == NULL){
+        errno = EINVAL;
+        return false;
+    }
+
+    map_node_t *ptr = self->nodes;
+    for (int freeNode = 0; freeNode < self->capacity; freeNode++){
+        self->destroy_function(ptr[freeNode].key, ptr[freeNode].val);
+        self->size--;
+    }
+
 	return false;
 }
 
 bool invalidate_map(hashmap_t *self) {
-    return false;
+
+    if (self == NULL){
+        errno = EINVAL;
+        return false;
+    }
+    if (self->invalid || self->capacity == 0 || self->nodes == NULL){
+        errno = EINVAL;
+        return false;
+    }
+
+    map_node_t *ptr = self->nodes;
+    for (int freeNode = 0; freeNode < self->capacity; freeNode++){
+        self->destroy_function(ptr[freeNode].key, ptr[freeNode].val);
+        self->size--;
+    }
+    free(self->nodes);
+    self->invalid = 1;
+
+    return true;
 }
