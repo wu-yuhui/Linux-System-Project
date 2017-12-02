@@ -20,11 +20,11 @@ void print_queue(queue_t *self){
     return;
 }
 
-/*
+
 void destroy_function(void *item){
     free(item);
 }
-*/
+
 
 queue_t *create_queue(void) {
 
@@ -57,6 +57,7 @@ bool invalidate_queue(queue_t *self, item_destructor_f destroy_function) {
 
     if (self->invalid){
         errno = EINVAL;
+        pthread_mutex_unlock(&self->lock);
         return false;
     }
 
@@ -86,6 +87,7 @@ bool enqueue(queue_t *self, void *item) {
 
     if (self->invalid){
         errno = EINVAL;
+        pthread_mutex_unlock(&self->lock);
         return false;
     }
 
@@ -107,13 +109,12 @@ bool enqueue(queue_t *self, void *item) {
 
     if (sem_post(&self->items)){     // Semaphore++
         errno = EINVAL;
+        pthread_mutex_unlock(&self->lock);
         return false;
     }
 
-    pthread_mutex_unlock(&self->lock);
-
     // print_queue(self);
-
+    pthread_mutex_unlock(&self->lock);
     return true;
 }
 
@@ -121,6 +122,7 @@ void *dequeue(queue_t *self) {
 
     if (self == NULL){
         errno = EINVAL;
+        printf("%s\n", "1");
         return NULL;
     }
 
@@ -128,33 +130,31 @@ void *dequeue(queue_t *self) {
 
     if (self->invalid){
         errno = EINVAL;
+        pthread_mutex_unlock(&self->lock);
         return NULL;
     }
 
-    if (self->front == NULL){       // Empty queue
-        errno = EINVAL;
-        return NULL;
-    }
-
-    queue_node_t *thisNode = self->front;
-    thisNode->item = NULL;          // Must? Or Not
-    if (thisNode == self->rear){
-        self->front = NULL;
-        self->rear = NULL;
-    }
-    else
-        self->front = thisNode->next;
-
-    free(thisNode);
+    pthread_mutex_unlock(&self->lock);
 
     if (sem_wait(&self->items)){
         errno = EINVAL;
         return NULL;
     }
 
-    pthread_mutex_unlock(&self->lock);
+    pthread_mutex_lock(&self->lock);
+
+    queue_node_t *thisNode = self->front;
+    void *item = thisNode -> item;
+    if (thisNode == self->rear){
+        self->front = NULL;
+        self->rear = NULL;
+    }
+    else
+        self->front = self->front->next;
+
+    free(thisNode);
 
     // print_queue(self);
-
-    return thisNode;
+    pthread_mutex_unlock(&self->lock);
+    return item;
 }
