@@ -84,7 +84,7 @@ bool put(hashmap_t *self, map_key_t key, map_val_t val, bool force) {
             iterNode[countNode] =  MAP_NODE(key, val, false);
             self->size++;   // Adding new
             pthread_mutex_unlock(&self->write_lock);
-            printf("put in %lu\n", key.key_len);
+            //printf("put in %lu\n", key.key_len);
             return true;
         }
         else if (!memcmp(iterNode[countNode].key.key_base, key.key_base, iterNode[countNode].key.key_len)){
@@ -133,7 +133,7 @@ map_val_t get(hashmap_t *self, map_key_t key) {
     do{
         if (!memcmp(iterNode[countNode].key.key_base, key.key_base, iterNode[countNode].key.key_len)){
             reader_unlock(self);
-            printf("VAL in get: %lu\n", iterNode[countNode].val.val_len);
+            //printf("VAL in get: %lu\n", iterNode[countNode].val.val_len);
             return iterNode[countNode].val;
         }
         else if (iterNode[countNode].key.key_base == NULL && iterNode[countNode].tombstone == false){
@@ -181,12 +181,12 @@ map_node_t delete(hashmap_t *self, map_key_t key) {
             iterNode[countNode] =  MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), true);    // Clear and have tombstone
             self->size--;
             pthread_mutex_unlock(&self->write_lock);
-            printf("To delete: %lu\n", toDelete.key.key_len);
+            //printf("To delete: %lu\n", toDelete.key.key_len);
             return toDelete;
         }
         else if (iterNode[countNode].key.key_base == NULL && iterNode[countNode].tombstone == false){
             pthread_mutex_unlock(&self->write_lock);
-            fprintf(stderr,"To TO:");
+            //fprintf(stderr,"To TO:");
             return MAP_NODE(MAP_KEY(NULL, 0), MAP_VAL(NULL, 0), false);    // empty node & no tomb -> Not found
         }
         countNode = (countNode+1) % self->capacity;     // Not found yet or Empty but have tombstone -> continues next
