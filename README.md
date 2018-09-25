@@ -1,8 +1,7 @@
-### Linux System Project
+## Linux System Project
 
-Lab Assignments of CSE320 - System Fundamentals II
-
-Author: Yu-Hui Wu
+* Lab Assignments of CSE320 - System Fundamentals II
+* Author: Yu-Hui Wu
 
 #### Dynamic Memeory Allocator
 
