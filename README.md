@@ -5,12 +5,13 @@
 
 #### Dynamic Memeory Allocator
 
+[hw3/](../master/hw3)
 
 
 #### Linux Shell
 
+[hw4/](../master/hw4)
 
+#### Thread-Safe Server
 
-#### Multithread Server
-
-
+[hw5/](../master/hw5)
