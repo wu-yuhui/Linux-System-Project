@@ -3,7 +3,7 @@
 * Lab Assignments of CSE320 - System Fundamentals II
 * Author: Yu-Hui Wu
 
-#### Dynamic Memeory Allocator
+#### Dynamic Memory Allocator
 
 [hw3/](../master/hw3)
 
